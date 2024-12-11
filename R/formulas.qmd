@@ -1,0 +1,193 @@
+---
+title: "Location-scale Meta-regression as a Tool to Capture Large-scale Changes in Biological and Methodological Heterogeneity"
+format: html
+editor: visual
+---
+
+# Outline
+
+1.  Introudction
+
+2.  Theory 
+
+2.1 Random-effects meta-analysis and meta-regression 
+2.2 Location-scale meta-regression 
+2.3 Mulitlevel location-scale meta-regression (MLSM) 
+2.4 Phylogenetic location-scale meta-regression
+2.5 Extending the idea of heterogeneity in location-scale models
+2.6 Modeling publication bias in location-scale models
+
+3.  Illustrative examples
+
+3.1 An example for a categorical moderator on the scale part
+
+Pottier, P., Burke, S., Zhang, R. Y., Noble, D. W., Schwanz, L. E., Drobniak, S. M., & Nakagawa, S. (2022). Developmental plasticity in thermal tolerance: Ontogenetic variation, persistence, and future directions. Ecology Letters, 25(10), 2245-2268.
+
+where they find variance is much higher aquatic organims than terrestrial organisms
+
+3.2 methodological categorical varaible --- 
+
+3.3 An example for a continuous moderator on the scale part
+
+Midolo G, De Frenne P, Holzel N, Wellstein C. Global patterns of intraspecific leaf trait responses to elevation. Global Change Biol. 2019;25(7):2485–98.
+
+3.4 Deteching different types of publication biases - small study effect, time-lag bias, and protous effect
+
+................................................................
+
+Where they find variance in effect sizes increased along the gradient
+
+4.  Discussion
+
+# Some ideas and formulas
+
+## Location-scale meta-analysis
+
+-   Heterogeneity is extremely high in almost all ecological and evolutionary meta-analyses.
+-   Indeed the main main of such meta-analyses is to quantify the heterogeneity and to understand the sources of heterogeneity.
+-   Yet, the current methods are limited in their ability to quantify and understand the heterogeneity, assuming homoscadastiity
+-   Therefore, we propose a new method that can quantify and understand the heterogeneity by introducing location-sclae meta-regression analyses.
+-   Although such locaiton-scale models have been used in emprical studies in ecology and evolution, we are yet unaware location-scale models are applied to ecological and evolutionary meta-analyses.
+-   We point out location-scale models are particular useful and relevant, even more than emprical studies, as meta-analyses are often based on a wide range of studies that are conducted in different conditions and with different methods, leading to not only high heterogeneity but also different variances amoing different levels in categorical moderators (i.e., heteroscadasticity).
+-   Indeed, more than 80% of moderators in ecological and evolutionary meta-analyses are categorical, which are likely to have different variances among different levels.
+-   Our method can reassess all previous meta-regression analyses, provding new insights into the underlying heterogeneity and therefore, enrching our understanding of pressing ecolgoical and enviromental issues as well as the biological world.
+
+## Location-scale random-effects model
+
+### random-effects meta-analysis and meta-regression
+
+$$
+y_{i} = \beta_0 + e_i + m_i
+$$ $yi$ effect size, ... $beta_0$ is the meta-analytic mean (intercept), $e_i$ is the effect-size level effect (the between-study effect), and $m_i$ is the sapling error (asumming within-study variance is zero or part of sampling error).
+
+$$
+e_i \sim \mathcal{N}(\mathbf{0}, \sigma_{e}^{2})
+$$
+
+$$
+m_i \sim \mathcal{N}(\mathbf{0}, \sigma_{m_i}^{2})
+$$
+
+$\sigma_{m_i}^{2}$ is the sampling error variance - we use the plug-in value. For example for Zr, we use $\frac{1}{n_{i}-3}$ where $n$ is the sample size used to obtain effect size $y_i$
+
+$$
+y_{i} = \beta_0 + \beta_1 x_{1i} + ... +  \beta_p x_{pi} +  e_i + m_i
+$$
+
+### location-scale meta-regression
+
+$$
+y_{i} = \beta_0^{(l)} + \beta_1^{(l)} x_{1i} + ... + \beta_p x_{pi} +  e_i^{(l)} + m_i^{(l)}
+$$
+
+$$
+e_i^{(l)} \sim \mathcal{N}(\mathbf{0}, \sigma_{e_i(l)}^{2})
+$$
+
+$$
+\ln({\sigma_{e_i}}) = \beta_0^{(s)} + \beta_1^{(s)} x_{1i} + ... + \beta_p^{(s)} x_{pi} 
+$$
+
+$$
+m_i \sim \mathcal{N}(\mathbf{0}, \mathbf{V})
+$$
+
+$\mathbf{V}$ is a block diagnoal matrix
+
+For example, the part of study 1's with 3 effect sizes where first two effect sizes are correlated $$
+\mathbf{V_1} = \begin{pmatrix}
+\sigma_{m_1}^{2} & \rho_{m} \sigma_{m_1} \sigma_{m_2} & 0 \\
+\rho_{m} \sigma_{m_1} \sigma_{m_2} & \sigma_{m_2}^{2} & 0 \\
+0 & 0 & \sigma_{m_3}^{2}
+\end{pmatrix}
+$$
+
+One can you the rubst variance estimator instead of V as $\rho_{m}$ is often unknown (although often assumed to be 0.5 or 0.8)
+
+## Mulitlevel location-scale meta-analysis (MLSM)
+
+$$
+y_{i} = \beta_0^{(l)} + \beta_1^{(l)} x_{1i} + ... + \beta_p^{(l)} x_{pi} + u_{j[i]}^{(l)} + e_i^{(l)}
+$$ $$
+u_j^{(l)} \sim \mathcal{N}(\mathbf{0}, \sigma_{u(l)}^{2})
+$$
+
+$$
+\ln({\sigma_{e_i}}) = \beta_0^{(s)} + \beta_1^{(s)} x_{1i} + ... + \beta_p^{(s)} x_{pi} 
+$$
+
+### the scale part with the between-study effect
+
+$$
+\ln({\sigma_{e_i}}) = \beta_0^{(s)} + \beta_1^{(s)} x_{1i} + ... + \beta_p^{(s)} x_{pi} +  u_i^{(l)} 
+$$
+
+$$
+\begin{pmatrix}
+u_j^{(l)} \\
+u_j^{(s)}
+\end{pmatrix}
+\sim \mathcal{N} \left(
+\begin{pmatrix}
+0 \\
+0
+\end{pmatrix},
+\begin{pmatrix}
+\sigma_{u(l)}^{2} & \rho_{u} \sigma_{u(l)} \sigma_{u(s)} \\
+\rho_{u} \sigma_{u(l)} \sigma_{u(s)} & \sigma_{u(s)}^{2}
+\end{pmatrix}
+\right)
+$$ Correlation between the location and scale random effects is $\rho_{u}$ is expected to be zero yet if we have a postive correlation it means that the studies with higher effect sizes have higher variances - indicating publcation bias (Fig XXX)
+
+### Extending the idea of heterogeneity in location-scale models
+
+$$
+CV_{H}^{(l)} = \frac{\bar\sigma_{u(l)}}{\sqrt{E(y_i)}}
+$$
+
+total variance idea (not that useful here)
+
+$$
+CV_{H}^{(s)} = \sqrt{\exp(\sigma_{u(s)}^2) - 1}
+$$
+
+## Phylogenetic location-scale meta-regression
+
+$$
+y_{i} = \beta_0^{(l)} + \beta_1^{(l)} x_{1i} + ... + \beta_p^{(l)} x_{pi}
++ a_{k[i]}^{(l)} + s_{k[i]}^{(l)} + u_i^{(l)} + e_i^{(l)}
+$$
+
+$$
+a_k^{(l)} \sim \mathcal{N}(\mathbf{0}, \sigma_{k(l)}^{2} \mathbf{A})
+$$
+
+$$
+s_k^{(l)} \sim \mathcal{N}(\mathbf{0}, \sigma_{s(l)}^{2})
+$$
+
+### without the random effect in the scale part
+
+$$
+\ln({\sigma_{e_i}}) = \beta_0^{(s)} + \beta_1^{(s)} x_{1i} + ... + \beta_p^{(s)} x_{pi} 
+$$ \### with the random effect in the scale part
+
+$$
+\ln({\sigma_{e_i}}) = \beta_0^{(s)} + \beta_1^{(s)} x_{1i} + ... + \beta_p^{(s)} x_{pi} +  u_i^{(l)} 
+$$ \# Instructions (we are aiming to publish this paper in Global Change Biology)
+
+Technical Advances present exciting new research tools, methods, and techniques, including new modelling approaches, and should include a detailed description of the methodological design and discussion of how this technique improves the study of global change biology. GCB has a wide readership; accordingly the technical advance must be broadly applicable. Papers describing methods that apply to one species or system are unlikely to meet our criteria unless authors are able to show that their methods can be generalized. The main body word limit is 4000 words (Introduction, Materials and Methods, Results & Discussion, and Acknowledgements). Formatting is standard (see Formatting Instructions, below) except that Results and Discussion may be combined. These are peer reviewed. Decisions are made by the Editors.
+
+GCB no longer has strict formatting requirements for initial submissions, but all manuscripts must contain the essential elements required during submission:
+
+```         
+Title
+Running Title: A short running title of less than 45 characters including spaces
+List of Authors: The full names of the authors. As part of the journal’s commitment to supporting authors at every step of the publishing process, the journal requires the submitting author (only) to provide an ORCID iD when submitting a manuscript. This takes around 2 minutes to complete. Find more information here.
+Institutional affiliations: All author's institutional affiliations where the work was conducted, with a footnote for the author’s present address if different from where the work was conducted; where authors have different addresses, use numbered superscripts to refer to each address provided.
+Contact Information Corresponding author’s telephone, and email details
+Abstract: Limited to 300 words. 
+Keywords: 6-10 keywords
+```
+
+GCB's content often includes regional, national, continental or global maps. We recognize there are disputes over borders and territories, which may be directly relevant for authors when describing their research. Any statements in research papers that declare that the maps published in these represent the borders of a country, can cause difficulties for GCB and Wiley with the country in question and its national laws. To avoid this, on any map that shows boundaries, please add a note clearly stating that "map lines delineate study areas and do not necessarily depict accepted national boundaries". If a perceived dispute or complaint is raised, our editorial team will attempt to find a resolution that works for all parties. Ultimately, the final decision on content is an editorial matter, and will rest with the journal Editors which, where necessary, will be in consultation with the Publisher.

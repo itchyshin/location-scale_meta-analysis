@@ -1,0 +1,247 @@
+Reference,Species,Family,Observations,Pub,"Seed
+size (mg)","Exp.
+cond","Census
+time (months)","Life
+form","r  
+        
+survival","n
+ survival","r 
+        growth","n
+ growth","r
+
+fecundity","n
+
+fecundity"
+Kalisz 1986,Collinsia verna,Scrophulariaceae,Winter 82,1,0.332,F,6,A,-0.062,5583,,,,
+Kalisz 1986,Collinsia verna,Scrophulariaceae,Spring 82,1,0.332,F,12,A,0.045,4324,,,-0.179,2580
+Kalisz 1986,Collinsia verna,Scrophulariaceae,Winter 83,1,0.332,F,6,A,0.012,8088,,,,
+Kalisz 1986,Collinsia verna,Scrophulariaceae,Spring 83,1,0.332,F,12,A,0.01,3556,,,-0.101,2440
+"Abul-Fatih and Bazzaz 
+        1979",Ambrosia trifida,Compositae,With Intrasp. competence,1,1.44,F,6,A,-0.119,1000,,,,
+"Abul-Fatih and Bazzaz 
+        1979",Ambrosia trifida,Compositae,"Without Intrasp. 
+        competence",1,1.44,F,6,A,-0.038,1000,,,,
+Lacey 1982,Daucus carota,Umbelliferae,1976- 77,1,1.04,F,12,A,0.471,2094,,,,
+Lacey 1982,Daucus carota,Umbelliferae,1977-78,1,1.04,F,12,A,0.307,933,-0.714,54,,
+"Black and Wilkinson 
+        1963",Trifolium subterraneum,Leguminosae,,1,7,NF,,,,,-0.053,960,,
+Miller 1987,Ambrosia artemissiifolia,Compositae,1982,1,,F,6,A,,,-0.068,202,,
+Miller 1987,Ambrosia artemissiifolia,Compositae,1983,1,,F,6,A,,,-0.1181,42,,
+Miller 1987,Ambrosia artemissiifolia,Compositae,1984,1,,F,6,A,-0.0004,260,-0.1556,260,,
+Miller 1987,Ambrosia artemissiifolia,Compositae,1985,1,,F,6,A,0.0068,267,-0.441,267,,
+Miller 1987,Chenopodium album,Chenopodiaceae,1982,1,1.16,F,6,A,,,-0.0047,101,,
+Miller 1987,Chenopodium album,Chenopodiaceae,1983,1,1.16,F,6,A,,,-0.0025,60,,
+Miller 1987,Chenopodium album,Chenopodiaceae,1984,1,1.16,F,6,A,-0.0145,340,-0.0038,340,,
+Miller 1987,Chenopodium album,Chenopodiaceae,1985,1,1.16,F,6,A,-0.0018,169,-0.0115,169,,
+Miller 1987,Lepidium campestre,Cruciferae,1982,1,,F,6,A,,,-0.0011,91,,
+Miller 1987,Lepidium campestre,Cruciferae,1985,1,,F,6,A,-0.0312,48,-0.001,48,,
+Miller 1987,Panicum capillare,Gramineae,1982,1,,F,6,A,,,-0.0046,54,,
+Miller 1987,Panicum capillare,Gramineae,1985,1,,F,6,A,-0.0038,659,-0.0142,659,,
+Miller 1987,Plantago lanceolata,Plantaginaceae,1982,1,1.6,F,6,A,,,-0.0333,83,,
+Miller 1987,Plantago lanceolata,Plantaginaceae,1983,1,1.6,F,6,A,,,-0.0105,10,,
+Miller 1987,Plantago lanceolata,Plantaginaceae,1984,1,1.6,F,6,A,-0.0068,154,-0.0232,154,,
+Miller 1987,Plantago lanceolata,Plantaginaceae,1985,1,1.6,F,6,A,0.0061,28,-0.0111,28,,
+Miller 1987,Potentilla recta,Rosaceae,1982,1,,F,6,P,,,-0.001,246,,
+Miller 1987,Potentilla recta,Rosaceae,1983,1,,F,6,P,,,-0.0011,83,,
+Miller 1987,Potentilla recta,Rosaceae,1984,1,,F,6,P,-0.0013,86,-0.0008,86,,
+Miller 1987,Potentilla recta,Rosaceae,1985,1,,F,6,P,-0.0114,27,-0.0003,27,,
+Miller 1987,Trifolium repens,Leguminosae,1982,1,0.64,F,6,P,,,-0.0062,244,,
+Miller 1987,Trifolium repens,Leguminosae,1983,1,0.64,F,6,P,,,-0.0028,19,,
+Miller 1987,Trifolium repens,Leguminosae,1985,1,0.64,F,6,P,-0.0032,63,-0.0004,63,,
+"Trimble and Tryon 
+        1969",Liriodendron tulipifera,Magnoliaceae,,1,39.2,F,36,P,-0.28,700,,,,
+Narita 1998,Blepharis sindica,Acanthaceae,,1,,F,8,A,-0.476,600,-0.582,481,-0.24,178
+Flower 1988,Aristida longiseta,Gramineae,,1,,F,4,P,-0.21,382,,,,
+Flower 1988,Bouteloua rigidiseta,Gramineae,Oct.83 to Feb.84,1,,F,4,P,0.12,758,,,,
+Jones et. al. 1997,Acer rubrum,Aceraceae,,1,20,F,6,P,-0.15,2000,-0.32,200,,
+"Escudero et. al. 
+        2000",Lepidium subulatum,Brassicaceae,,1,,F,21,P,0.011,1153,,,,
+"Simons and Johnston 
+        2000",Lobelia inflata,Campanulaceae,,1,0.02,NF,6,A,-0.169,211,-0.345,46,,
+"Baskin and Baskin 
+        1972","Leavenworthia 
+        stylosa",Cruciferae,,1,,F,10,A,0.495,644,,,,
+Baalen et. al. 1984,Digitalis purpurea,Scrophulariaceae,"Low competence treatment 
+        (75:25)",1,0.072,NF,2.5,P,-0.304,2025,-0.094,2025,,
+Baalen et. al. 1984,Scrophularia nodosa,Scrophulariaceae,"Low competence treatment 
+        (75:25)",1,0.07,NF,2.5,P,-0.45,2025,-0.076,2025,,
+Venable et. al. 1987,Heterosperma pinnatum,Compositae,,1,1.88,F,7,A,0.168,254,,,,
+"Marks and Stephen 
+        1981",Lactuca serriola,Compositae,,1,0.45,F,12,A,0.346,726,,,-0.529,726
+"Van der Toorn and 
+        Pons 1988",Plantago lanceolata,Plantaginaceae,Gap,1,1.53,F,12,P,-0.054,219,,,,
+"Van der Toorn and 
+        Pons 1988",Plantago lanceolata,Plantaginaceae,Vegetation,1,1.53,F,12,P,-0.219,213,,,,
+"Van der Toorn and 
+        Pons, 1988",Plantago major,Plantaginaceae,Gap,1,0.31,F,10,P,-0.201,162,,,,
+"Van der Toorn and 
+        Pons 1988",Plantago major,Plantaginaceae,Vegetation,1,0.31,F,10,P,-0.523,67,,,,
+Stanton 1985,Raphanus raphanistrum,Cruciferae,,1,6,F,2,A,-0.4056,111,-0.6014,111,-0.144,71
+"González-Astorga 
+        and Núñez-Farfán 2000",Tagetes micrantha,Compositae,,1,,F,6,A,0.469,5331,,,-0.9612,2103
+Cook 1980,Viola blanda,Violaceae,,1,,F,36,P,-0.27,411,,,,
+Battaglia 1996,Eucalyptus delegatensis,Myrtaceae,Harsh site,1,7.1,F,12,P,-0.147,4482,,,,
+Battaglia 1996,Eucalyptus delegatensis,Myrtaceae,Mild site,1,7.1,F,12,P,-0.195,5454,,,,
+Battaglia 1996,Eucalyptus amygdalyna,Myrtaceae,Harsh site,1,12,F,12,P,0.001,1536,,,,
+Battaglia 1996,Eucalyptus amygdalyna,Myrtaceae,Mild site,1,12,F,12,P,-0.092,2601,,,,
+"Kachi and Hirose 
+        1990",Oenothera glazioviana,Onagraceae,,1,0.6,F,12,P,0.257,1588,,,,
+Herranz et. al. 1996,Pinus halepensis,Pinaceae,,1,16.1,F,30,P,0.213,465,,,,
+"Dunlap and Barnett 
+        1982",Pinus taeda,Pinaceae,,1,41,NF,,P,,,-0.96,300,,
+Kalisz 1989,Collinsia verna,Scrophulariaceae,Outcrossed,1,0.332,NF,,A,,,,,-0.03,182
+Kalisz 1989,Collinsia verna,Scrophulariaceae,Selfed,1,0.332,NF,,A,,,,,0.02,176
+Howell 1981,Impatiens capensis,Balsaminaceae,,1,10,F,,A,-0.31,434,,,-0.32,410
+Biere 1991,Lychnis flos-cuculi,Caryophyllaceae,,1,168,F,16,P,-0.056,1606,0.001,335,,
+"Tremlett et. al. 
+        1984",Conium maculatum,Umbelliferae,,1,1.9,F,8.5,P,-0.112,3530,,,,
+"Zimmerman and Weis 
+        1984",Xanthium strumarium,Compositae,Low density,1,,F,4,A,-0.252,144,,,,
+"Zimmerman and Weis 
+        1984",Xanthium strumarium,Compositae,High density,1,,F,4,A,-0.257,371,,,,
+Ross and Harper 1972,Dactylis glomerata,Gramineae,,1,1.1108,NF,2,P,,,,,-0.2569,12540
+"Dolan and Sharitz 
+        1984",Ludwigia leptocarpa,Onagraceae,,1,0.1,F,12,A,-0.005,915,-0.075,184,,
+Streng et. al. 1989,Carpinus caroliniana,Betulaceae,,1,1.5,F,36,P,-0.105,961,,,,
+Kelly 1992,Chamaecrista fasciculata,Leguminosae,site1,1,,F,3,A,0.027,554,0.26,554,0.003,178
+Kelly 1992,Chamaecrista fasciculata,Leguminosae,site2,1,,F,3,A,-0.01,522,0.24,522,,
+Roach 1986,Geranium carolinianum,Geraniaceae,,1,2.5,NF,6,A,,,-0.27,117,-0.24,122
+"Wang and Lechowicz 
+        1998",Pinus banksiana,Pinaceae,,1,3.6,NF,4,P,0.008,384,-0.9881,384,,
+"Wang and Lechowicz 
+        1998",Picea mariana,Pinaceae,,1,1.12,NF,4,P,0.214,384,-0.977,384,,
+"Weaver and Cavers 
+        1978",Rumex crispus,Polygonaceae,Population 1,1,1.33,F,5,P,-0.02,1181,,,,
+"Weaver and Cavers 
+        1978",Rumex crispus,Polygonaceae,Population 2,1,1.33,F,5,P,-0.075,942,,,,
+"Weaver and Cavers 
+        1978",Rumex crispus,Polygonaceae,Population3,1,1.33,F,5,P,-0.248,621,,,,
+"Weaver and Cavers 
+        1978",Rumex obtusifolius,Polygonaceae,Population 1,1,1.1,F,5,P,-0.067,894,,,,
+"Weaver and Cavers 
+        1978",Rumex obtusifolius,Polygonaceae,Population 2,1,1.1,F,5,P,-0.109,878,,,,
+"Weaver and Cavers 
+        1978",Rumex obtusifolius,Polygonaceae,Population3,1,1.1,F,5,P,-0.152,355,,,,
+Gross and Smith 1991,Panicum dichotomiflorum,Gramineae,North Early,1,0.55,F,4,A,,,-0.2,177,0.04,177
+Gross and Smith 1991,Panicum dichotomiflorum,Gramineae,South Early,1,0.55,F,4,A,,,-0.33,166,0.02,166
+Gross and Smith 1991,Panicum dichotomiflorum,Gramineae,North late,1,0.55,F,4,A,,,-0.32,120,-0.05,120
+Gross and Smith 1991,Panicum dichotomiflorum,Gramineae,South late,1,0.55,F,4,A,,,-0.09,79,-0.22,79
+Cabin et. al. 1997a,Lesquerella fendleri,Cruciferae,High water conditions,1,,NF,,P,-0.351,276,,,,
+Cabin et. al. 1997a,Lesquerella fendleri,Cruciferae,Low water conditions,1,,NF,,P,-0.039,520,,,,
+Cabin et. al. 1997b,Lesquerella fendleri,Cruciferae,,1,,NF,5,P,-0.216,384,,,,
+Cabin et. al. 1997b,Lesquerella fendleri,Cruciferae,Beneath shrubs,1,,NF,5,P,,,-0.073,101,,
+Cabin et. al. 1997b,Lesquerella fendleri,Cruciferae,Shrub interspace,1,,NF,5,P,,,0.23,101,,
+García 1998,Juniperus communis,Cupressaceae,,0,16.1,F,12,P,-0.1286,292,,,,
+"Montesinos, D., personal 
+        communication",Silene dicilinis,Caryophyllaceae,1999,0,1.23,F,,P,-0.145,480,,,,
+"Montesinos, D., personal 
+        communication",Silene dicilinis,Caryophyllaceae,2000,0,1.23,F,,P,0.05,1059,,,,
+Miller et al. 1994,Prunella vulgaris,Lamiaceae,"Low density-Hexagonal 
+        dist",1,0.6,NF,,P,,,-0.092,120,,
+Miller et al. 1994,Prunella vulgaris,Lamiaceae,"Low density-Random 
+        dist",1,0.6,NF,,P,,,-0.113,120,,
+Miller et al. 1994,Prunella vulgaris,Lamiaceae,"Low density-High 
+        Variation",1,0.6,NF,,P,,,-0.078,120,,
+Miller et al. 1994,Prunella vulgaris,Lamiaceae,"Medium density-Hexagonal 
+        dist",1,0.6,NF,,P,,,-0.096,300,,
+Miller et al. 1994,Prunella vulgaris,Lamiaceae,"Medium density-Random 
+        dist",1,0.6,NF,,P,,,-0.143,300,,
+Miller et al. 1994,Prunella vulgaris,Lamiaceae,"Medium density-High 
+        Variation",1,0.6,NF,,P,,,-0.17,300,,
+Miller et al. 1994,Prunella vulgaris,Lamiaceae,"High density-Hexagonal 
+        dist",1,0.6,NF,,P,,,-0.167,1200,,
+Miller et al. 1994,Prunella vulgaris,Lamiaceae,"High density-Random 
+        dist",1,0.6,NF,,P,,,-0.172,1200,,
+Miller et al. 1994,Prunella vulgaris,Lamiaceae,"High density-High 
+        Variation",1,0.6,NF,,P,,,-0.192,1200,,
+Seiwa 1998,Acer mono,Sapindaceae,"Forest understory-flushed 
+        leafing",1,,F,8,P,-0.308,387,,,,
+Seiwa 1998,Acer mono,Sapindaceae,"Forest understory-continuous 
+        leafing",1,,F,8,P,-0.231,474,,,,
+Seiwa 1998,Acer mono,Sapindaceae,Forest edges,1,,F,8,P,-0.161,293,,,,
+Seiwa 1998,Acer mono,Sapindaceae,Small gaps,1,,F,8,P,-0.306,747,,,,
+Mack and Pyke 1983,Bromus tectorum,Poaceae,77-78 moist,1,,F,10,A,-0.329,424,,,,
+Mack and Pyke 1983,Bromus tectorum,Poaceae,78-79 moist,1,,F,10,A,0.606,2880,,,,
+Mack and Pyke 1983,Bromus tectorum,Poaceae,79-80 moist,1,,F,10,A,0.092,524,,,,
+Mack and Pyke 1983,Bromus tectorum,Poaceae,77-78 mesic,1,,F,10,A,0.257,912,,,,
+Mack and Pyke 1983,Bromus tectorum,Poaceae,78-79 mesic,1,,F,10,A,0.046,2619,,,,
+Mack and Pyke 1983,Bromus tectorum,Poaceae,79-80 mesic,1,,F,10,A,0.503,1079,,,,
+Mack and Pyke 1983,Bromus tectorum,Poaceae,77-78 dry,1,,F,10,A,-0.125,1419,,,,
+Mack and Pyke 1983,Bromus tectorum,Poaceae,78-79 dry,1,,F,10,A,0.832,4031,,,,
+Mack and Pyke 1983,Bromus tectorum,Poaceae,79-80 dry,1,,F,10,A,0.005,2796,,,,
+Kelly and Levin 1997,Phlox drummondii,Polemoniaceae,Bastrop 89,1,,F,6,A,-0.059,315,,,-0.02,26
+Kelly and Levin 1997,Phlox drummondii,Polemoniaceae,Bastrop 90,1,,F,6,A,-0.278,717,,,-0.171,133
+Kelly and Levin 1997,Phlox drummondii,Polemoniaceae,Bastrop 91,1,,F,6,A,-0.116,468,,,-0.189,143
+Kelly and Levin 1997,Phlox drummondii,Polemoniaceae,Luling 89,1,,F,6,A,-0.139,1465,,,-0.163,205
+Kelly and Levin 1997,Phlox drummondii,Polemoniaceae,Luling 90,1,,F,6,A,-0.235,988,,,-0.0079,71
+Kelly and Levin 1997,Phlox drummondii,Polemoniaceae,Montopolis 89,1,,F,6,A,-0.178,452,,,-0.201,49
+Picó and Retana 2000,Lobularia maritima,Brassicaceae,1994,1,0.35,F,12,P,0.035,583,,,-0.448,115
+Picó and Retana 2000,Lobularia maritima,Brassicaceae,1995,1,0.35,F,12,P,0.029,208,,,-0.526,115
+Picó and Retana 2000,Lobularia maritima,Brassicaceae,1996,1,0.35,F,12,P,-0.013,620,,,-0.491,115
+Donohue 2002,Arabidopsis thaliana,Brassicaceae,,1,0.03,F,6,A,-0.31,810,,,,
+"Shimono and Kudo 
+        2003",Potentilla matsumurae,Rosaceae,"Fellfield seeds on 
+        fellfield plots",1,0.44,F,7,P,-0.199,79,,,,
+Abbott et al. 1998,Senecio vulgaris,Asteraceae,Early sown; NR seeds,1,0.22,NF,7,A,-0.148,720,,,,
+Abbott et al. 1998,Senecio vulgaris,Asteraceae,Early sown; R seeds,1,0.22,NF,7,A,0.095,735,,,,
+Abbott et al. 1998,Senecio vulgaris,Asteraceae,Late sown; NR seeds,1,0.22,NF,7,A,0.439,723,,,,
+Abbott et al. 1998,Senecio vulgaris,Asteraceae,Late sown; R seeds,1,0.22,NF,7,A,0.08,839,,,,
+"Mineau and Puech 
+        1987",Sanguisorba minor,Rosaceae,site1 yr85,1,1.8,F,12,P,-0.391,99,,,,
+"Mineau and Puech 
+        1987",Sanguisorba minor,Rosaceae,site2 yr 85,1,1.8,F,12,P,-0.203,416,,,,
+"Mineau and Puech 
+        1987",Sanguisorba minor,Rosaceae,site 1 yr 86,1,1.8,F,24,P,-0.022,372,,,,
+"Mineau and Puech 
+        1987",Sanguisorba minor,Rosaceae,site 2 yr 86,1,1.8,F,24,P,-0.426,578,,,,
+"de Luis Arrillaga 
+        2002",Cistus albidus,Cistaceae,Control,0,1.1,F,36,P,-0.236,388,-0.64,128,,
+"de Luis Arrillaga 
+        2002",Cistus albidus,Cistaceae,Control,0,1.1,F,36,P,-0.236,388,-0.64,128,,
+"de Luis Arrillaga 
+        2002",Helianthemum marifolium,Cistaceae,Control,0,,F,36,P,-0.361,255,-0.36,80,,
+"de Luis Arrillaga 
+        2002",Helianthemum marifolium,Cistaceae,Eroded,0,,F,36,P,-0.227,252,-0.386,65,,
+"de Luis Arrillaga 
+        2002",Ononis fruticosa,Fabaceae,Control,0,,F,36,P,0.108,125,-0.3,45,,
+"de Luis Arrillaga, 
+        2002",Ononis fruticosa,Fabaceae,Eroded,0,,F,36,P,0.15,79,,,,
+"de Luis Arrillaga, 
+        2002",Ulex parviflorus,Fabaceae,Control,0,4.07,F,36,P,-0.002,118,-0.487,27,,
+"de Luis Arrillaga 
+        2002",Ulex parviflorus,Fabaceae,Eroded,0,4.07,F,36,P,0.086,136,-0.344,20,,
+"Espigares and Peco 
+        1995",Several spp,,46 annual species,1,,NF,2,A,-0.167,5713,,,,
+"Verdú, personal 
+        observation",Pistacia lentiscus,Anacardiaceae,,0,15.72,F,31,P,0.475,141,,,,
+"García and Obeso, 
+        personal communication",Crataegus monogyna,Rosaceae,,0,87.1,F,12,P,0.178,294,,,,
+"García and Obeso, 
+        personal communication",Ilex aquifolium,Aquifoliaceae,,0,28.2,F,12,P,0.101,803,,,,
+"García and Obeso, 
+        personal communication",Taxus baccata,Taxaceae,,0,66.3,F,12,P,0.052,92,,,,
+"Rodríguez et al., 
+        personal communication",Crataegus monogyna,Rosaceae,,0,112.4,F,17,P,0.274,25,,,,
+"Rodríguez et al., 
+        personal communication",Ephedra fragilis,Ephedraceae,,0,11.9,F,7,P,-0.153,80,,,,
+"Rodríguez et al., 
+        personal communication",Osyris alba,Santalaceae,,0,91.8,F,9,P,-0.469,165,,,,
+"Rodríguez et al., 
+        personal communication",Rhamnus alaternus,Rhamnaceae,,0,9.4,F,6,P,-0.5,71,,,,
+"Rodríguez et al., 
+        personal communication",Rhamnus ludovici-salvatoris,Rhamnaceae,,0,4.5,F,6,P,-0.479,36,,,,
+"Rodríguez et al., 
+        personal communication",Rubia peregrina,Rubiaceae,,0,20.4,F,18,P,0.259,103,,,,
+"Rodríguez et al., 
+        personal communication",Rubus ulmifolius,Rosaceae,,0,3.3,F,17,P,0.19,23,,,,
+"Rodríguez et al., 
+        personal communication",Solanum luteum,Solanaceae,,0,0.001,F,15,P,0.035,68,,,,
+"Rodríguez et al., 
+        personal communication",Solanum nigrum,Solanaceae,,0,0.001,F,16,P,0.21,66,,,,
+"Rodríguez et al., 
+        personal communication",Smilax aspera,Smilacaceae,,0,47.2,F,5,P,-0.454,25,,,,
+Quintana et al. 2004,Cistus ladanifer,Cistaceae,yr1,1,1.19,F,36,P,-0.08,959,,,,
+Quintana et al. 2004,Cistus ladanifer,Cistaceae,yr2,1,1.19,F,24,P,-0.022,694,,,,
+Quintana et al. 2004,Erica umbellata,Ericaceae,yr1,1,,F,36,P,-0.056,1441,,,,
+Quintana et al. 2004,Erica umbellata,Ericaceae,yr2,1,,F,24,P,0.218,439,,,,
+Quintana et al. 2004,Rosmarinus officinalis,Lamiaceae,yr1,1,0.8,F,36,P,-0.015,363,,,,

@@ -142,6 +142,55 @@ summary(fit1a)
 
 saveRDS(fit1a, here("Rdata", "fit1a.rds"))
 
+#TODO 
+
+
+# try method
+
+dat$method <- ifelse(dat$exp_design == c("A", "B", "C"), "initial", "persisitent")
+
+
+
+form1b <- bf(dARR
+            ~ 1  + method +
+              (1|study_ID) + # this is u
+              (1|gr(es_ID, cov = vcv)), # this is m
+            sigma ~ 1 + method
+)
+
+
+# create prior
+
+prior1b <- default_prior(form1b, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+# fixing the varaince to 1 (meta-analysis)
+prior1b$prior[5] = "constant(1)"
+prior1b 
+# fit model
+
+fit1b <- brm(form1b, 
+            data = dat, 
+            data2 = list(vcv = vcv),
+            chains = 2, 
+            cores = 2, 
+            iter = 3000, 
+            warmup = 2000,
+            #backend = "cmdstanr",
+            prior = prior1b,
+            #threads = threading(9),
+            control = list(adapt_delta = 0.99, max_treedepth = 15)
+)
+
+summary(fit1b)
+
+# save this as rds
+
+saveRDS(fit1b, here("Rdata", "fit1b.rds"))
+
 
 #############################
 # genetic data set (categorical - method)
@@ -460,8 +509,8 @@ fit5 <- brm(form5,
             data2 = list(vcv = vcv),
             chains = 2, 
             cores = 2, 
-            iter = 3000, 
-            warmup = 2000,
+            iter = 35000, 
+            warmup = 5000,
             #backend = "cmdstanr",
             prior = prior5,
             #threads = threading(9),
@@ -476,6 +525,7 @@ saveRDS(fit5, here("Rdata", "fit5.rds"))
 
 
 # case_441
+#-------------
 
 dat <- read.csv(here("data", "case_441.csv"))
 

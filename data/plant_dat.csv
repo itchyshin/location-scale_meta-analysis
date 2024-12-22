@@ -2,16 +2,7 @@ Reference,Species,Family,Observations,Pub,"Seed
 size (mg)","Exp.
 cond","Census
 time (months)","Life
-form","r  
-        
-survival","n
- survival","r 
-        growth","n
- growth","r
-
-fecundity","n
-
-fecundity"
+form",r_survival,n_survival,r_growth,n_growth,r_fecundity,n_fecundity
 Kalisz 1986,Collinsia verna,Scrophulariaceae,Winter 82,1,0.332,F,6,A,-0.062,5583,,,,
 Kalisz 1986,Collinsia verna,Scrophulariaceae,Spring 82,1,0.332,F,12,A,0.045,4324,,,-0.179,2580
 Kalisz 1986,Collinsia verna,Scrophulariaceae,Winter 83,1,0.332,F,6,A,0.012,8088,,,,

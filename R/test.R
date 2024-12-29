@@ -8,36 +8,8 @@ pacman::p_load(tidyverse,
                brms,
                metafor,
                # reading xls
-               readxl)
-
-############
-# load data
-############
-# test
-# 
-# data <- data.frame(
-#   yi = c(0.2, 0.5, -0.3, 0.1),  # Effect sizes
-#   sei = c(0.1, 0.2, 0.15, 0.1)  # Standard errors
-# )
-# 
-# # Add a study column
-# data$study <- factor(1:nrow(data))
-# 
-# # Add a study column
-# library(brms)
-# 
-# # Fit the location-scale model
-# meta_model <- brm(
-#   bf(yi | se(sei) ~ 1 + (1 | study), sigma ~ 1 + (1 | study)),  # Location-scale model
-#   data = data,
-#   family = gaussian(),
-#   prior = c(
-#     prior(normal(0, 1), class = Intercept),
-#     prior(cauchy(0, 1), class = sd),
-#     prior(cauchy(0, 1), class = sigma)
-#   ),
-#   iter = 4000, warmup = 1000, chains = 4, cores = 4
-# )
+               readxl,
+               metafor)
 
 
 #############
@@ -63,7 +35,93 @@ vcv <- vcalc(vi = Var_dARR,
 rownames(vcv) <- dat$es_ID
 colnames(vcv) <- dat$es_ID
 
-# length
+# meta-analysis 
+
+# no correlation 
+
+form0 <- bf(dARR
+            ~ 1   +
+              (1|study_ID) + # this is u
+              (1|gr(es_ID, cov = vcv)), # this is m
+            sigma ~ 1 + (1|study_ID)
+)
+
+
+
+prior0 <- default_prior(form0, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+# fixing the varaince to 1 (meta-analysis)
+prior0$prior[3] = "constant(1)"
+prior0 
+# fit model
+
+fit0 <- brm(form0, 
+            data = dat, 
+            data2 = list(vcv = vcv),
+            chains = 2, 
+            cores = 2, 
+            iter = 6000, 
+            warmup = 3000,
+            #backend = "cmdstanr",
+            prior = prior0,
+            #threads = threading(9),
+            control = list(adapt_delta = 0.95, max_treedepth = 15)
+)
+
+summary(fit0)
+
+# save this as rds
+
+saveRDS(fit0, here("Rdata", "fit1.rds"))
+
+# with correlation
+
+form0b <- bf(dARR
+            ~ 1   +
+              (1|p|study_ID) + # this is u
+              (1|gr(es_ID, cov = vcv)), # this is m
+            sigma ~ 1 + (1|p|study_ID)
+)
+
+
+
+prior0b <- default_prior(form0b, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+# fixing the varaince to 1 (meta-analysis)
+prior0b$prior[3] = "constant(1)"
+prior0b 
+# fit model
+
+fit0b <- brm(form0b, 
+            data = dat, 
+            data2 = list(vcv = vcv),
+            chains = 2, 
+            cores = 2, 
+            iter = 6000, 
+            warmup = 3000,
+            #backend = "cmdstanr",
+            prior = prior0b,
+            #threads = threading(9),
+            control = list(adapt_delta = 0.95, max_treedepth = 15)
+)
+
+summary(fit0b)
+
+# save this as rds
+
+saveRDS(fit0b, here("Rdata", "fit1.rds"))
+
+
+
+# biological - meta-regression
 form1 <- bf(dARR
             ~ 1  + habitat +
               (1|study_ID) + # this is u
@@ -81,7 +139,7 @@ prior1 <- default_prior(form1,
 )
 
 # fixing the varaince to 1 (meta-analysis)
-prior1$prior[6] = "constant(1)"
+prior1$prior[5] = "constant(1)"
 prior1 
 # fit model
 
@@ -105,7 +163,7 @@ summary(fit1)
 saveRDS(fit1, here("Rdata", "fit1.rds"))
 
 # response difference
-
+# we could do a version without correlation
 
 form1a <- bf(dARR
             ~ 1 + habitat + 
@@ -198,6 +256,12 @@ summary(fit1b)
 # save this as rds
 
 saveRDS(fit1b, here("Rdata", "fit1b.rds"))
+
+# reading rsd
+
+fit1b <- readRDS(here("Rdata", "fit1b.rds"))
+
+summary(fit1b)
 
 # 
 # #############################
@@ -324,8 +388,8 @@ fit3 <- brm(form3,
             data2 = list(vcv = vcv),
             chains = 2, 
             cores = 2, 
-            iter = 3000, 
-            warmup = 2000,
+            iter = 6000, 
+            warmup = 3000,
             #backend = "cmdstanr",
             prior = prior3,
             #threads = threading(9),
@@ -337,6 +401,12 @@ summary(fit3)
 # save this as rds
 
 saveRDS(fit3, here("Rdata", "fit3.rds"))
+
+# reading rds
+
+fit3 <- readRDS(here("Rdata", "fit3.rds"))
+
+summary(fit3)
 
 
 # ##################

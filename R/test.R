@@ -1,4 +1,4 @@
-# some teests 
+# some tests
 
 pacman::p_load(tidyverse, 
                here,
@@ -10,6 +10,10 @@ pacman::p_load(tidyverse,
                # reading xls
                readxl,
                metafor)
+
+# TODO
+
+# - phylogenetic models?
 
 
 #############
@@ -35,6 +39,39 @@ vcv <- vcalc(vi = Var_dARR,
 rownames(vcv) <- dat$es_ID
 colnames(vcv) <- dat$es_ID
 
+
+# use metafor
+
+# random effect model
+# note it models tau2 (simga_u^2) but brms models sigma_u 
+
+mod <- rma(yi = dARR, 
+           vi = Var_dARR, 
+           test="t",
+           data = dat)
+
+summary(mod)
+
+
+modb <- rma(yi = dARR, 
+           vi = Var_dARR, 
+           mods = ~ habitat,
+           test="t",
+           data = dat)
+
+summary(modb)
+
+modc <- rma(yi = dARR, 
+            vi = Var_dARR, 
+            mods = ~ habitat,
+            scale = ~ habitat,
+            test="t",
+            data = dat)
+
+summary(modc)
+
+# brms
+
 # meta-analysis 
 
 # no correlation 
@@ -53,6 +90,7 @@ prior0 <- default_prior(form0,
                         data2 = list(vcv = vcv),
                         family = gaussian()
 )
+
 
 # fixing the varaince to 1 (meta-analysis)
 prior0$prior[3] = "constant(1)"
@@ -76,7 +114,7 @@ summary(fit0)
 
 # save this as rds
 
-saveRDS(fit0, here("Rdata", "fit1.rds"))
+saveRDS(fit0, here("Rdata", "fit0.rds"))
 
 # with correlation
 
@@ -96,7 +134,7 @@ prior0b <- default_prior(form0b,
 )
 
 # fixing the varaince to 1 (meta-analysis)
-prior0b$prior[3] = "constant(1)"
+prior0b$prior[5] = "constant(1)"
 prior0b 
 # fit model
 
@@ -117,7 +155,7 @@ summary(fit0b)
 
 # save this as rds
 
-saveRDS(fit0b, here("Rdata", "fit1.rds"))
+saveRDS(fit0b, here("Rdata", "fit0b.rds"))
 
 
 
@@ -359,6 +397,126 @@ dat <- escalc(measure = "ROM",
 vcv <- diag(dat$vi)
 rownames(vcv) <- dat$es_ID
 colnames(vcv) <- dat$es_ID
+
+
+
+# random effect model
+# note it models tau2 (simga_u^2) but brms models sigma_u 
+
+mod2 <- rma(yi = yi, 
+           vi = vi, 
+           test="t",
+           data = dat)
+
+summary(mod2)
+
+
+mod2b <- rma(yi = yi, 
+            vi = vi, 
+            mods = ~ elevation_log,
+            test="t",
+            data = dat)
+
+summary(mod2b)
+
+mod2c <- rma(yi = yi, 
+            vi = vi, 
+            mods = ~ elevation_log,
+            scale = ~ elevation_log,
+            test="t",
+            data = dat)
+
+summary(mod2c)
+
+# brms
+
+# meta-analysis 
+
+# no correlation 
+
+form2 <- bf(yi
+            ~ 1   +
+              (1|study_ID) + # this is u
+              (1|gr(es_ID, cov = vcv)), # this is m
+            sigma ~ 1 + (1|study_ID)
+)
+
+
+
+prior2 <- default_prior(form2, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+
+# fixing the varaince to 1 (meta-analysis)
+prior2$prior[3] = "constant(1)"
+prior2 
+# fit model
+
+fit2 <- brm(form2, 
+            data = dat, 
+            data2 = list(vcv = vcv),
+            chains = 2, 
+            cores = 2, 
+            iter = 6000, 
+            warmup = 3000,
+            #backend = "cmdstanr",
+            prior = prior2,
+            #threads = threading(9),
+            control = list(adapt_delta = 0.95, max_treedepth = 15)
+)
+
+summary(fit2)
+
+# save this as rds
+
+saveRDS(fit2, here("Rdata", "fit2.rds"))
+
+# with correlation
+
+form2b <- bf(yi
+             ~ 1   +
+               (1|p|study_ID) + # this is u
+               (1|gr(es_ID, cov = vcv)), # this is m
+             sigma ~ 1 + (1|p|study_ID)
+)
+
+
+
+prior2b <- default_prior(form2b, 
+                         data = dat, 
+                         data2 = list(vcv = vcv),
+                         family = gaussian()
+)
+
+# fixing the varaince to 1 (meta-analysis)
+prior2b$prior[5] = "constant(1)"
+prior2b 
+# fit model
+
+fit2b <- brm(form2b, 
+             data = dat, 
+             data2 = list(vcv = vcv),
+             chains = 2, 
+             cores = 2, 
+             iter = 6000, 
+             warmup = 3000,
+             #backend = "cmdstanr",
+             prior = prior2b,
+             #threads = threading(9),
+             control = list(adapt_delta = 0.95, max_treedepth = 15)
+)
+
+summary(fit2b)
+
+# save this as rds
+
+saveRDS(fit2b, here("Rdata", "fit2b.rds"))
+
+
+
 
 # SMD = d 
 form3 <- bf(yi

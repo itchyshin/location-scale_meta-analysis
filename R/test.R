@@ -733,6 +733,96 @@ vcv <- diag(dat$var.eff.size)
 rownames(vcv) <- dat$es_ID
 colnames(vcv) <- dat$es_ID
 
+
+# no correlation 
+# this runs but the one with correlation does not mix well
+
+form4 <- bf(smd
+            ~ 1   +
+              (1|study_ID) + # this is u
+              (1|gr(es_ID, cov = vcv)), # this is m
+            sigma ~ 1 + (1|study_ID)
+)
+
+
+
+prior4 <- default_prior(form4, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+
+# fixing the varaince to 1 (meta-analysis)
+prior4$prior[3] = "constant(1)"
+prior4 
+# fit model
+
+fit4 <- brm(form4, 
+            data = dat, 
+            data2 = list(vcv = vcv),
+            chains = 2, 
+            cores = 2, 
+            iter = 30000, 
+            warmup = 5000,
+            #backend = "cmdstanr",
+            prior = prior2,
+            #threads = threading(9),
+            control = list(adapt_delta = 0.99, max_treedepth = 15)
+)
+
+summary(fit4)
+
+# save this as rds
+
+saveRDS(fit4, here("Rdata", "fit4.rds"))
+
+# with correlation
+# a good example of not working with the correlation paramter
+
+form4b <- bf(smd
+             ~ 1   +
+               (1|p|study_ID) + # this is u
+               (1|gr(es_ID, cov = vcv)), # this is m
+             sigma ~ 1 + (1|p|study_ID)
+)
+
+
+
+prior4b <- default_prior(form4b, 
+                         data = dat, 
+                         data2 = list(vcv = vcv),
+                         family = gaussian()
+)
+
+# fixing the varaince to 1 (meta-analysis)
+prior2b$prior[5] = "constant(1)"
+prior2b 
+# fit model
+
+fit4b <- brm(form4b, 
+             data = dat, 
+             data2 = list(vcv = vcv),
+             chains = 2, 
+             cores = 2, 
+             iter =35000, 
+             warmup = 5000,
+             #backend = "cmdstanr",
+             prior = prior4b,
+             #threads = threading(9),
+             control = list(adapt_delta = 0.99, max_treedepth = 15)
+)
+
+summary(fit4b)
+
+# save this as rds
+
+saveRDS(fit4b, here("Rdata", "fit4b.rds"))
+
+
+
+
+# meta-regression
 # SMD
 
 form5 <- bf(smd

@@ -858,7 +858,7 @@ fit5 <- brm(form5,
             control = list(adapt_delta = 0.99, max_treedepth = 20)
 )
 
-summary(fit5)
+summary(fit5) 
 
 # save fit5 as rds
 

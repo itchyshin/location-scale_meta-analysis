@@ -84,7 +84,6 @@ form0 <- bf(dARR
 )
 
 
-
 prior0 <- default_prior(form0, 
                         data = dat, 
                         data2 = list(vcv = vcv),
@@ -109,6 +108,10 @@ fit0 <- brm(form0,
             #threads = threading(9),
             control = list(adapt_delta = 0.95, max_treedepth = 15)
 )
+
+# load the rds
+
+fit0 <- readRDS(here("Rdata", "fit0.rds"))
 
 summary(fit0)
 

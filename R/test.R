@@ -224,8 +224,8 @@ prior1a <- default_prior(form1a,
 )
 
 # fixing the varaince to 1 (meta-analysis)
-prior1$prior[8] = "constant(1)"
-prior1 
+prior1a$prior[7] = "constant(1)"
+prior1a
 
 
 # fit model

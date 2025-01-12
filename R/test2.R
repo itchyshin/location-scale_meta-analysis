@@ -1,5 +1,7 @@
 # comparing metafor and brms
 
+devtools::install_github("donaldRwilliams/blsmeta")
+
 # some tests
 
 pacman::p_load(tidyverse, 
@@ -11,6 +13,7 @@ pacman::p_load(tidyverse,
                metafor,
                # reading xls
                readxl,
+               blsmeta,
                metafor)
 
 # patrice's data set (categorical - biological)

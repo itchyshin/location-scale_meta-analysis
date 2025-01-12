@@ -231,6 +231,8 @@ mr2 <- readRDS(here("Rdata", "mr2.rds"))
 
 summary(mr2)
 
+
+###############
 # common mistake - the model which does not run
 
 # brms

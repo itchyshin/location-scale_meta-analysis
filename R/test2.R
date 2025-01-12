@@ -234,6 +234,16 @@ mr2 <- readRDS(here("Rdata", "mr2.rds"))
 
 summary(mr2)
 
+# blmata
+
+
+res0 <- blsmeta(yi = dARR,
+               vi = Var_dARR,
+               es_id = es_ID,
+               study_id = study_ID,
+               mods_scale2 = ~ 1,
+               data = dat)
+
 
 ###############
 # common mistake - the model which does not run
@@ -263,3 +273,143 @@ ma1 <- brm(form1,
            control = list(adapt_delta = 0.99, max_treedepth = 20)
 )
 
+#############
+## 3 levels
+################
+
+# biological - meta-regression
+form1 <- bf(dARR
+            ~ 1  + habitat +
+              (1|study_ID) + # this is u
+              (1|gr(es_ID, cov = vcv)), # this is m
+            sigma ~ 1 + habitat
+)
+
+
+# create prior
+
+prior1 <- default_prior(form1, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+# fixing the varaince to 1 (meta-analysis)
+prior1$prior[5] = "constant(1)"
+prior1 
+# fit model
+
+res1 <- brm(form1, 
+            data = dat, 
+            data2 = list(vcv = vcv),
+            chains = 2, 
+            cores = 2, 
+            iter = 3000, 
+            warmup = 2000,
+            #backend = "cmdstanr",
+            prior = prior1,
+            #threads = threading(9),
+            control = list(adapt_delta = 0.95, max_treedepth = 15)
+)
+
+# save this as rds
+
+saveRDS(res1, here("Rdata", "res1.rds"))
+
+# read in rds
+res1_brms <- readRDS(here("Rdata", "res1.rds"))
+
+
+summary(res1_brms)
+
+# blmeta
+
+res1a <- blsmeta(yi = dARR,
+               vi = Var_dARR,
+               es_id = es_ID,
+               study_id = study_ID,
+               mods = ~ 1 + habitat,
+               mods_scale2 = ~ 1 + habitat,
+               data = dat)
+#save
+
+saveRDS(res1a, here("Rdata", "res1a.rds"))
+
+# read in rds
+
+res1a <- readRDS(here("Rdata", "res1a.rds"))
+
+print(res1a)
+
+
+# try method
+
+dat$method <- ifelse(dat$exp_design == c("A", "B", "C"), "initial", "persisitent")
+
+
+
+form1b <- bf(dARR
+             ~ 1  + method +
+               (1|study_ID) + # this is u
+               (1|gr(es_ID, cov = vcv)), # this is m
+             sigma ~ 1 + method
+)
+
+
+# create prior
+
+prior1b <- default_prior(form1b, 
+                         data = dat, 
+                         data2 = list(vcv = vcv),
+                         family = gaussian()
+)
+
+# fixing the varaince to 1 (meta-analysis)
+prior1b$prior[5] = "constant(1)"
+prior1b 
+# fit model
+
+res2 <- brm(form1b, 
+             data = dat, 
+             data2 = list(vcv = vcv),
+             chains = 2, 
+             cores = 2, 
+             iter = 3000, 
+             warmup = 2000,
+             #backend = "cmdstanr",
+             prior = prior1b,
+             #threads = threading(9),
+             control = list(adapt_delta = 0.99, max_treedepth = 15)
+)
+
+summary(res2)
+
+# save this as rds
+saveRDS(res2, here("Rdata", "res2.rds"))
+# reading rsd
+
+res2 <- readRDS(here("Rdata", "res2.rds"))
+
+summary(res2)
+
+# blsmeta
+
+
+res2a <- blsmeta(yi = dARR,
+                 vi = Var_dARR,
+                 es_id = es_ID,
+                 study_id = study_ID,
+                 mods = ~ 1 + method,
+                 mods_scale2 = ~ 1 + method,
+                 data = dat)
+#save
+
+#save
+
+saveRDS(res2a, here("Rdata", "res2a.rds"))
+
+# read in rds
+
+res2a <- readRDS(here("Rdata", "res2a.rds"))
+
+print(res2a)

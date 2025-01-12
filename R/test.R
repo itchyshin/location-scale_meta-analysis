@@ -7,6 +7,7 @@ pacman::p_load(tidyverse,
                pander,
                brms,
                metafor,
+               blsmeta,
                # reading xls
                readxl,
                metafor)
@@ -197,11 +198,29 @@ fit1 <- brm(form1,
             control = list(adapt_delta = 0.95, max_treedepth = 15)
 )
 
-summary(fit1)
-
 # save this as rds
 
 saveRDS(fit1, here("Rdata", "fit1.rds"))
+# read in rds
+
+fit1 <- readRDS(here("Rdata", "fit1.rds"))
+
+
+summary(fit1)
+
+
+
+
+# blsmeta
+
+res0 <- blsmeta(yi = dARR,
+               vi = Var_dARR,
+               es_id = es_ID,
+               study_id = study_ID,
+               mods_scale2 = ~ 1,
+               data = dat)
+
+
 
 # response difference
 # we could do a version without correlation

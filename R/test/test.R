@@ -740,7 +740,7 @@ summary(fit3)
 # Pollination and seed dispersal are the most threatened processes of plant regeneration. 
 # Scientific Reports, 6(1), 29839.
 
-dat <- read.csv(here("data", "case_385.csv"))
+dat <- read.csv(here("data", "seed.csv"))
 
 head(dat)
 

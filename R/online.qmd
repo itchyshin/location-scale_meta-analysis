@@ -1595,7 +1595,7 @@ saveRDS(fit_mr10, here("Rdata", "fit_mr10.rds"))
 ```{r}
 # read in rds
 fit_mr10  <- readRDS(here("Rdata", "fit_mr10.rds"))
-print(summary(fit_mr10), digit = 4)
+print(fit_mr10, digit = 4)
 ```
 
 
@@ -1668,7 +1668,7 @@ saveRDS(fit_mr12, here("Rdata", "fit_mr12.rds"))
 ```{r}
 # read in rds
 fit_mr12 <- readRDS(here("Rdata", "fit_mr12.rds"))
-print(summary(fit_mr12), digit = 4)
+print(fit_mr12, digit = 4)
 ```
 
 

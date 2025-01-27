@@ -818,8 +818,8 @@ prior4b <- default_prior(form4b,
 )
 
 # fixing the varaince to 1 (meta-analysis)
-prior2b$prior[5] = "constant(1)"
-prior2b 
+prior4b$prior[5] = "constant(1)"
+prior4b 
 # fit model
 
 fit4b <- brm(form4b, 

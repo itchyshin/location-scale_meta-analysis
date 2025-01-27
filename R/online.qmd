@@ -304,7 +304,7 @@ Pottier, P. et al. (2022). Developmental plasticity in thermal tolerance: Ontoge
 
 ## Loading the data
 
-This dataset (thermal.csv) has an effect size `dARR` (the developmental acclimation response ratio: the ratio of the slopes of acclimation) and sampling variance `Var_dARR`. Key moderators are two categorical variables: (1) `habitat` (e.g., aquatic vs. terrestrial: where animals live) and (2) `method` (initial vs. persisitent: experimental design where only temparature increase was applied during intial phaes or over the entire experimental perid).
+This dataset (thermal.csv) has an effect size `dARR` (the developmental acclimation response ratio: the ratio of the slopes of acclimation) and sampling variance `Var_dARR`. Key moderators are two categorical variables: (1) `habitat` (e.g., aquatic vs. terrestrial: where animals live) and (2) `method` (initial vs. persisitent: experimental design where only temparature increase was applied during initial phases or over the entire experimental period).
 
 ```{r}
 dat <- read.csv(here("data", "thermal.csv"))
@@ -320,10 +320,6 @@ dat$method <- ifelse(dat$exp_design == c("A", "B", "C"), "initial", "persisitent
 
 #head(dat)
 str(dat)
-
-# If needed, create effect-size IDs
-# dat$es_ID <- as.factor(1:nrow(dat))
-# dat$study_ID <- <some factor> if multiple effect sizes per study
 ```
 
 ## Creating a variance-covariance matrix for sampling errors
@@ -362,6 +358,53 @@ colnames(vcv2) <- dat$es_ID
 :::{.callout-important}
 
 TODO - write the importance of modeling sampling error as the random effects and also fixing its variance as 1 and why
+
+```{r}
+#| eval: false
+
+form1 <- bf(dARR | se(si) ~ 1 + habitat, # this is e
+            sigma ~ 1 + habitat
+)
+
+prior1 <- default_prior(form1, 
+                        data = dat, 
+                        family = gaussian()
+)
+
+ma1 <- brm(form1, 
+           data = dat, 
+           chains = 2, 
+           cores = 2, 
+           iter = 5000, 
+           warmup = 2000,
+           prior = prior1,
+           control = list(adapt_delta = 0.99, max_treedepth = 20)
+)
+
+# this is wrong too - as it mulitple sigma^2 to sampling variance 
+#(in meta-analysis, sampling varaince is assumed to be known)
+
+form2 <- bf(dARR | se(si, sigma = TRUE) ~ 1 + habitat, # this is e
+            sigma ~ 1 + habitat
+)
+
+prior2 <- default_prior(form1, 
+                        data = dat, 
+                        family = gaussian()
+)
+
+# this will run but this is a different model
+ma2 <- brm(form2, 
+           data = dat, 
+           chains = 2, 
+           cores = 2, 
+           iter = 5000, 
+           warmup = 2000,
+           prior = prior1,
+           control = list(adapt_delta = 0.99, max_treedepth = 20)
+)
+```
+
 
 :::
 :::
@@ -432,8 +475,17 @@ plots_fit_ma1 <- list(
 plots_fit_ma1[[1]] / plots_fit_ma1[[2]] / plots_fit_ma1[[3]]
 ```
 
+### Quantifying heterogeniety on the location and scale part
 
-TODO - probably try to get - CV and I2????
+```{r}
+
+#  TODO - probably try to get - CV and I2????
+
+
+```
+
+
+
 
 ## Location-scale meta-regression with a categorical moderator (biological)
 
@@ -836,7 +888,7 @@ mr3_mod <- rma.mv(yi = yi,
 bubble_plot(mr3_mod, mod = "elevation_log", group = "study_ID", g = TRUE, 
             xlab = "ln(elevation) (moderator)",
             ylab = "SDM (effect size)",
-            legend.pos = "bottom.out")
+            legend.pos = "bottom.left")
 ```
 
 One can clearly see an increase in variation as `evvelation_log` goes up. 
@@ -1127,12 +1179,12 @@ mr4_mod <- rma.mv(yi = smd,
 bubble_plot(mr4_mod, mod = "se", group = "study_ID", g = TRUE, 
             xlab = "Standard error (SE: moderator)",
             ylab = "SDM (effect size)",
-            legend.pos = "bottom.out")
+            legend.pos = "bottom.left")
 
 bubble_plot(mr4_mod, mod = "cyear", group = "study_ID", g = TRUE, 
             xlab = "centered publicaiton year (moderator)",
             ylab = "SDM (effect size)",
-            legend.pos = "bottom.out")
+            legend.pos = "bottom.left")
 
 ```
 
@@ -1149,23 +1201,65 @@ Rodriguez JE, Williams DR, Bürkner PC. Heterogeneous heterogeneity by default: 
 
 Williams DR, Rodriguez JE, Bürkner PC. Putting variation into variance: modeling between-study heterogeneity in meta-analysis. PsyArXiv 2024 https://osf.io/preprints/psyarxiv/9vkqy
 
-Here we use the dataset from **Example 1** above. This section have three parts: 1) comparing results of the random-effects meta-analyses (not location-scale models) using `metafor` and `brms` (we show two different ways in `metafor` and three different ways in `brms` to do this), 2) comparing results of ranodm-effects location-scale meta-regression models using `metafor` and `brms` and 3) comparing mulitilevel (3 level) location-scale meta-regression using `blsmeta` and `brms`.
+This section have three parts: 1) comparing results of the random-effects meta-analyses (not location-scale models) using `metafor` and `brms` (we show two different ways in `metafor` and three different ways in `brms` to do this), 2) comparing results of ranodm-effects location-scale meta-regression models using `metafor` and `brms` and 3) comparing mulitilevel (3 level) location-scale meta-regression using `blsmeta` and `brms`.
 
 ## The random-effects meta-analysis with `metafor` and `brms`
+
+### Loading the data
+
+Here and below, we use the dataset from **Example 1**.
+
+```{r}
+dat <- read.csv(here("data", "thermal.csv"))
+
+# selecting varaibles we need
+dat <- dat %>% select(dARR, Var_dARR, es_ID, population_ID, study_ID, exp_design, habitat)
+dat$study_ID <- as.numeric(dat$study_ID)
+# creating SE (sqrt(Var))
+dat$si <- sqrt(dat$Var_dARR)
+
+# creating a new variable (method) according to the oringal paper
+dat$method <- ifelse(dat$exp_design == c("A", "B", "C"), "initial", "persisitent")
+
+#head(dat)
+str(dat)
+```
+
+### Creating a variance-covariance matrix for sampling errors
+
+```{r}
+# assuming indepdence of each effect size like above
+vcv <- diag(dat$Var_dARR)
+rownames(vcv) <- dat$es_ID
+colnames(vcv) <- dat$es_ID
+```
+
+The following six models should and will produce the same results (apart form MCMD errors)
 
 ### Using `metafor` 1
 
 ```{r}
+# random effects - default
+fit_ma5 <- rma(yi = dARR, 
+           vi = Var_dARR, 
+           test="t",
+           data = dat)
 
-
+summary(fit_ma5)
 ```
 
 
 ### Using `metafor` 2
 
 ```{r}
+# random effects - default
+fit_ma6 <- rma.mv(yi = dARR, 
+              V = vcv,
+              random = ~ 1 | es_ID,
+              test="t",
+              data = dat)
 
-
+summary(fit_ma6)
 ```
 
 ### Using `brms` 1
@@ -1173,6 +1267,35 @@ Here we use the dataset from **Example 1** above. This section have three parts:
 ```{r}
 #| eval: false
 
+form_ma7 <- bf(dARR | se(si) ~ 1 +  (1|es_ID) # this is e
+)
+
+prior_ma7 <- default_prior(form_ma7, 
+                        data = dat, 
+                        #data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+fit_ma7 <- brm(form_ma7, 
+            data = dat, 
+            chains = 2, 
+            cores = 2, 
+            iter = 35000, 
+            warmup = 5000,
+            prior = prior_ma7,
+            control = list(adapt_delta = 0.99, max_treedepth = 20)
+)
+
+
+# save as rds
+saveRDS(fit_ma7, here("Rdata", "fit_ma7.rds"))
+
+```
+
+```{r}
+# load rds
+fit_ma7 <- readRDS(here("Rdata", "fit_ma7.rds"))
+print(summary(fit_ma7), digits = 4)
 ```
 
 
@@ -1181,6 +1304,42 @@ Here we use the dataset from **Example 1** above. This section have three parts:
 ```{r}
 #| eval: false
 
+# brms 2
+#------------
+form_ma8 <- bf(dARR  ~ 1 +  (1|es_ID) # this is e
+            + fcor(vcv)
+)
+
+prior_ma8 <- default_prior(form_ma8, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+
+# we need to fix the variance to 1 = fcor(vcv)
+prior_ma8$prior[5] = "constant(1)"
+prior_ma8 
+
+fit_ma8 <- brm(form_ma8, 
+           data = dat, 
+           data2 = list(vcv = vcv),
+           chains = 2, 
+           cores = 2, 
+           iter = 15000, 
+           warmup = 5000,
+           prior = prior_ma8,
+           control = list(adapt_delta = 0.99, max_treedepth = 20)
+)
+
+# save as rds
+saveRDS(fit_ma8, here("Rdata", "fit_ma8.rds"))
+```
+
+```{r}
+# load rds
+fit_ma8 <- readRDS(here("Rdata", "fit_ma8.rds"))
+print(summary(fit_ma8), digit = 4)
 ```
 
 
@@ -1190,30 +1349,326 @@ Here we use the dataset from **Example 1** above. This section have three parts:
 ```{r}
 #| eval: false
 
+# brm 3 (using the trick expalined above)
+#------------
+form_ma9 <- bf(dARR  ~ 1 +   
+              (1|gr(es_ID, cov = vcv)), # this is m
+            # residual will be es_ID SD
+)
+
+prior_ma9 <- default_prior(form_ma9, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+# fixing the varaince to 1 (meta-analysis)
+prior_ma9$prior[3] = "constant(1)"
+prior_ma9 
+
+fit_ma9 <- brm(form_ma9, 
+           data = dat, 
+           data2 = list(vcv = vcv),
+           chains = 2, 
+           cores = 2, 
+           iter = 3000, 
+           warmup = 2000,
+           prior = prior_ma9,
+           #control = list(adapt_delta = 0.99, max_treedepth = 20)
+)
+
+saveRDS(fit_ma9, here("Rdata", "ma4.rds"))
 ```
+
+Note that this model coverged very quickly esp compared to the first and second models 
+
+```{r}
+# load rds
+fit_ma9 <- readRDS(here("Rdata", "fit_ma9.rds"))
+print(summary(fit_ma9), digit = 4)
+```
+
 
 ## The random-effects location-scale meta-regression with `metafor` and `brms`
 
+Note that while `metafor` uses the variance on the sacle part, `brms` uses SD (`sqrt(variance)`) so one needs to double regression coefficients on the sacle part from `brms` to make them comparable. 
 
-### Using `metafor`
+### Using `metafor` (habitat)
 
 ```{r}
+# metafor
+#------------
+fit_mr5 <- rma(yi = dARR, 
+            vi = Var_dARR, 
+            mods = ~ habitat,
+            scale = ~ habitat,
+            test="t",
+            data = dat)
+
+summary(fit_mr5)
+```
+
+
+### Using `brms` (habitat)
+
+```{r}
+#| eval: false
+form_mr6 <- bf(dARR
+            ~ 1   + habitat + 
+              (1|gr(es_ID, cov = vcv)), # this is m
+            sigma ~ 1 + habitat
+)
+
+
+prior_mr6 <- default_prior(form_mr6, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+
+# fixing the varaince to 1 (meta-analysis)
+prior_mr6$prior[5] = "constant(1)"
+prior_mr6 
+# fit model
+
+fit_mr6 <- brm(form_mr6, 
+            data = dat, 
+            data2 = list(vcv = vcv),
+            chains = 2, 
+            cores = 2, 
+            iter = 35000, 
+            warmup = 5000,
+            prior = prior_mr6,
+            control = list(adapt_delta = 0.95, max_treedepth = 15)
+)
+
+# save as rds
+
+saveRDS(fit_mr6, here("Rdata", "fit_mr6.rds"))
 
 ```
 
 
-### Using `brms`
+```{r}
+# load the rds
+
+fit_mr6 <- readRDS(here("Rdata", "fit_mr6.rds"))
+print(summary(fit_mr6), digit = 4)
+```
+
+
+### Using `metafor` (method)
 
 ```{r}
+fit_mr7 <- rma(yi = dARR, 
+            vi = Var_dARR, 
+            mods = ~ method,
+            scale = ~ method,
+            test="t",
+            data = dat)
+
+summary(fit_mr7)
+```
+
+
+### Using `brms` (method)
+
+```{r}
+#| eval: false
+
+form_mr8 <- bf(dARR
+            ~ 1   + method + 
+              (1|gr(es_ID, cov = vcv)), # this is m
+            sigma ~ 1 + method
+)
+
+
+prior_mr8<- default_prior(form_mr8, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+
+# fixing the varaince to 1 (meta-analysis)
+prior_mr8$prior[5] = "constant(1)"
+prior_mr8 
+# fit model
+
+fit_mr8 <- brm(form_mr8, 
+            data = dat, 
+            data2 = list(vcv = vcv),
+            chains = 2, 
+            cores = 2, 
+            iter = 35000, 
+            warmup = 5000,
+            prior = prior_mr8,
+            control = list(adapt_delta = 0.95, max_treedepth = 15)
+)
+
+# save as rds
+
+saveRDS(fit_mr8, here("Rdata", "fit_mr8.rds"))
+```
+
+```{r}
+# load the rds
+fit_mr8 <- readRDS(here("Rdata", "fit_mr8.rds"))
+print(summary(fit_mr8), digit = 4)
+```
+
+
+## Mulitlevel (3-level) location-scale meta-regression models with `brms` and `blsmeta`
+
+TODO - something writing here
+
+Both `brms` and `blsmeta` model the ln(SD) on their scale parts so they are directly comparable both on the location and scale parts. 
+
+### Using `brms` (habitat)
+
+```{r}
+#| eval: false
+
+form_mr9 <- bf(dARR
+            ~ 1  + habitat +
+              (1|study_ID) + # this is u
+              (1|gr(es_ID, cov = vcv)), # this is m
+            sigma ~ 1 + habitat
+)
+
+
+# create prior
+
+prior_mr9 <- default_prior(form_mr9, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+# fixing the varaince to 1 (meta-analysis)
+prior_mr9$prior[5] = "constant(1)"
+prior_mr9 
+
+# fit model
+fit_mr9 <- brm(form_mr9, 
+            data = dat, 
+            data2 = list(vcv = vcv),
+            chains = 2, 
+            cores = 2, 
+            iter = 3000, 
+            warmup = 2000,
+            prior = prior_mr9,
+            control = list(adapt_delta = 0.95, max_treedepth = 15)
+)
+
+# save this as rds
+saveRDS(fit_mr9, here("Rdata", "fit_mr91.rds"))
+```
+
+
+```{r}
+# read in rds
+fit_mr9 <- readRDS(here("Rdata", "fit_mr9.rds"))
+print(summary(fit_mr9), digit = 4)
+```
+
+
+### Using `blsmeta` (habitat)
+
+```{r}
+#| eval: false
+
+fit_mr10 <- blsmeta(yi = dARR,
+               vi = Var_dARR,
+               es_id = es_ID,
+               study_id = study_ID,
+               mods = ~ 1 + habitat,
+               mods_scale2 = ~ 1 + habitat,
+               data = dat)
+#save
+saveRDS(fit_mr10, here("Rdata", "fit_mr10.rds"))
 
 ```
 
 
+```{r}
+# read in rds
+fit_mr10  <- readRDS(here("Rdata", "fit_mr10.rds"))
+print(summary(fit_mr10), digit = 4)
+```
 
-## Mulitlevel (3-level) location-scale meta-regression models with `blsmeta` and `brms
+
+### Using `brms` (method)
 
 ```{r}
+#| eval: false
 
+form_mr12  <- bf(dARR
+             ~ 1  + method +
+               (1|study_ID) + # this is u
+               (1|gr(es_ID, cov = vcv)), # this is m
+             sigma ~ 1 + method
+)
+
+
+# create prior
+
+prior_mr11 <- default_prior(form_mr11, 
+                         data = dat, 
+                         data2 = list(vcv = vcv),
+                         family = gaussian()
+)
+
+# fixing the varaince to 1 (meta-analysis)
+prior_mr11$prior[5] = "constant(1)"
+prior_mr11 
+# fit model
+
+fit_mr11 <- brm(form_mr11, 
+             data = dat, 
+             data2 = list(vcv = vcv),
+             chains = 2, 
+             cores = 2, 
+             iter = 3000, 
+             warmup = 2000,
+             prior = prior_mr11,
+             control = list(adapt_delta = 0.99, max_treedepth = 15)
+)
+
+summary(fit_mr11)
+
+# save this as rds
+saveRDS(fit_mr11, here("Rdata", "fit_mr11.rds"))
+```
+
+```{r}
+# reading rsd
+fit_mr11 <- readRDS(here("Rdata", "fit_mr11.rds"))
+print(summary(fit_mr11), digit = 4)
+```
+
+
+### Using `blsmeta` (method)
+
+```{r}
+#| eval: false
+
+fit_mr12 <- blsmeta(yi = dARR,
+                 vi = Var_dARR,
+                 es_id = es_ID,
+                 study_id = study_ID,
+                 mods = ~ 1 + method,
+                 mods_scale2 = ~ 1 + method,
+                 data = dat)
+#save
+saveRDS(fit_mr12, here("Rdata", "fit_mr12.rds"))
+```
+
+```{r}
+# read in rds
+fit_mr12 <- readRDS(here("Rdata", "fit_mr12.rds"))
+print(summary(fit_mr12), digit = 4)
 ```
 
 

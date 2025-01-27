@@ -175,6 +175,8 @@ ma5 <- brm(form5,
 
 print(summary(ma5), digits = 4)
 
+# save as rds
+saveRDS(ma4, here("Rdata", "ma5.rds"))
 
 # above shows my trick works - let's move to l-s meta-regressoin
 
@@ -246,7 +248,7 @@ res0 <- blsmeta(yi = dARR,
 
 
 ###############
-# common mistake - the model which does not run
+# potential mistake - the model which does not run
 
 # brms
 
@@ -256,20 +258,39 @@ form1 <- bf(dARR | se(si) ~ 1 + habitat, # this is e
 
 prior1 <- default_prior(form1, 
                         data = dat, 
-                        #data2 = list(vcv = vcv),
                         family = gaussian()
 )
 
 ma1 <- brm(form1, 
            data = dat, 
-           #data2 = list(vcv = vcv),
            chains = 2, 
            cores = 2, 
-           iter = 35000, 
-           warmup = 5000,
-           #backend = "cmdstanr",
+           iter = 5000, 
+           warmup = 2000,
            prior = prior1,
-           #threads = threading(9),
+           control = list(adapt_delta = 0.99, max_treedepth = 20)
+)
+
+# this is wrong too - as it mulitple sigma^2 to sampling variance 
+#(in meta-analysis, sampling varaince is assumed to be known)
+
+form2 <- bf(dARR | se(si, sigma = TRUE) ~ 1 + habitat, # this is e
+            sigma ~ 1 + habitat
+)
+
+prior2 <- default_prior(form1, 
+                        data = dat, 
+                        family = gaussian()
+)
+
+# this will run but this is a different model
+ma2 <- brm(form2, 
+           data = dat, 
+           chains = 2, 
+           cores = 2, 
+           iter = 5000, 
+           warmup = 2000,
+           prior = prior1,
            control = list(adapt_delta = 0.99, max_treedepth = 20)
 )
 
@@ -413,3 +434,33 @@ saveRDS(res2a, here("Rdata", "res2a.rds"))
 res2a <- readRDS(here("Rdata", "res2a.rds"))
 
 print(res2a)
+
+#######
+
+### Using `blsmeta`
+
+```{r}
+#| eval: false
+
+fit_ma10 <- blsmeta(yi = dARR,
+                    vi = Var_dARR,
+                    es_id = es_ID,
+                    study_id = study_ID,
+                    mods_scale2 = ~ 1,
+                    data = dat)
+
+saveRDS(fit_ma10, here("Rdata", "fit_ma10.rds"))
+```
+
+
+```{r}
+
+saveRDS(res1a, here("Rdata", "res1a.rds"))
+
+# read in rds
+
+res1a <- readRDS(here("Rdata", "res1a.rds"))
+
+print(res1a)
+
+```

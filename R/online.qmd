@@ -152,16 +152,30 @@ pacman::p_load(
   tidybayes,
   here,
   patchwork,
-  orchaRd,
+  orchaRd,  # see the note
   ggplot2,
   pander,
   brms,
   metafor,
-  blsmeta,
-  readxl
+  blsmeta # see the note
 )
 
 ```
+
+
+:::{.column-margin}
+:::{.callout-note}
+not about functions to install.....
+
+```{r}
+
+```
+
+It's important...
+
+:::
+:::
+
 
 ## Adding custum functions
 
@@ -176,10 +190,14 @@ get_variables_dynamic <- function(model, pattern) {
 }
 
 rename_vars <- function(variable) {
-  variable <- gsub("b_Intercept", "b0_l", variable)
-   variable <- gsub("b_sigma_Intercept", "b0_s", variable)  
+  variable <- gsub("b_Intercept", "b_l_int", variable)
+  variable <- gsub("b_sigma_Intercept", "b_s_int", variable)  
   variable <- gsub("b_habitatterrestrial", "b_l_contrast", variable)            
   variable <- gsub("b_sigma_habitatterrestrial", "b_s_contrast", variable)
+  variable <- gsub("b_methodpersisitent", "b_l_contrast", variable)            
+  variable <- gsub("b_sigma_methodpersisitent", "b_s_contrast", variable)
+  variable <- gsub("b_elevation_log", "b_l_slope", variable)            
+  variable <- gsub("b_sigma_elevation_log", "b_s_slope", variable)
   variable <- gsub("sd_study_ID__Intercept", "sd_l_study_ID", variable)            
   variable <- gsub("sd_study_ID__sigma_Intercept", "sd_s_study_ID", variable)
   variable <- gsub("cor_study_ID__Intercept__sigma_Intercept", "cor_study_ID", variable)  
@@ -279,7 +297,6 @@ visualize_correlations <- function(model) {
 ```
 
 
-
 # Example 1: Categorical Moderator (Thermal Tolerance Dataset)
 
 Data source (illustrative):
@@ -296,8 +313,10 @@ dat <- read.csv(here("data", "thermal.csv"))
 dat <- dat %>% select(dARR, Var_dARR, es_ID, population_ID, study_ID, exp_design, habitat)
 
 # creating SE (sqrt(Var))
-
 dat$si <- sqrt(dat$Var_dARR)
+
+# creating a new variable (method) according to the oringal paper
+dat$method <- ifelse(dat$exp_design == c("A", "B", "C"), "initial", "persisitent")
 
 #head(dat)
 str(dat)
@@ -321,10 +340,12 @@ colnames(vcv) <- dat$es_ID
 
 ### Modeling non-independence
 
-In reality, non-indepedence of sampling errors are common (effect sizes are obtained partially or all from the same subjects or individuals)
+In reality, non-independence of sampling errors are common (effect sizes are obtained partially or all from the same subjects or individuals)
 
 ```{r}
+#| eval: false
 # here correlated structure or cluster is population_ID
+# vcalc is from the metafor pacakge
 # we will not sue this for models but this is for demonstration
 
 vcv2 <- vcalc(vi = Var_dARR, 
@@ -387,14 +408,11 @@ fit_ma1 <- readRDS(here("Rdata", "fit_ma1.rds"))
 summary(fit_ma1)
 ```
 
-Not that there is non-zero variance (SD) in the between-study effect on the scale part as well as the location part. Also, there is a positive and significant correaltion ($\rho_u = 0.38$) between the location and scale between-study random effects.
+Note that there is non-zero variance (SD) in the between-study effect on the scale part as well as the location part. Also, there is a positive and significant correaltion ($\rho_u = 0.38$) between the location and scale between-study random effects.
 
 ### Visualzing meta-analytic results
 
 ```{r}
-#| fig-height: 7
-#| fig-width: 15
-
 # getting plots
 plots_fit_ma1 <- list(
   visualize_fixed_effects(fit_ma1),
@@ -403,7 +421,7 @@ plots_fit_ma1 <- list(
 )
 
 
-plots_fit_ma1[[1]] + plots_fit_ma1[[2]] + plots_fit_ma1[[3]]
+plots_fit_ma1[[1]] / plots_fit_ma1[[2]] / plots_fit_ma1[[3]]
 ```
 
 
@@ -413,6 +431,7 @@ TODO - probably try to get - CV and I2????
 
 ```{r}
 #| eval: false
+#TODO - may need to rerun this model
 
 # biological - meta-regression
 form_mr1 <- bf(dARR
@@ -465,9 +484,6 @@ summary(fit_mr1)
 ### Visualzing meta-regression results (biological)
 
 ```{r}
-#| fig-height: 7
-#| fig-width: 15
-
 # getting plots
 plots_fit_mr1 <- list(
   visualize_fixed_effects(fit_mr1),
@@ -475,17 +491,14 @@ plots_fit_mr1 <- list(
 )
 
 
-plots_fit_mr1[[1]] + plots_fit_mr1[[2]]
+plots_fit_mr1[[1]] / plots_fit_mr1[[2]]
 ```
 
 ### Visualzing effect sizes with a orchard plot (biological)
 
 ```{r}
-#| fig-height: 7
-#| fig-width: 15
-
 # using metafor and use heteroscad model
-# see - 
+# see - Nakagawa S, Lagisz M, O'Dea RE, Pottier P, Rutkowska J, Senior AM, Yang Y, Noble DW. orchaRd 2.0: An R package for visualising meta-analyses with orchard plots.
 mr1_mod <- rma.mv(yi = dARR, 
                   V =  vcv,
                   mod = ~ habitat,
@@ -505,16 +518,93 @@ orchard_plot(mr1_mod, mod = "habitat", group = "study_ID", xlab = "Effect size")
 ## Location-scale meta-regression with a categorical moderator (methodological)
 
 
+```{r}
+#| eval: false
+
+#TODO - may need to rerun this model
+
+form_mr2 <- bf(dARR
+            ~ 1  + method +
+              (1|study_ID) + # this is u
+              (1|gr(es_ID, cov = vcv)), # this is m
+            sigma ~ 1 + method
+)
+
+
+# create prior
+
+prior_mr2 <- default_prior(form_mr2, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+# fixing the varaince to 1 (meta-analysis)
+prior_mr2$prior[5] = "constant(1)"
+prior_mr2 
+# fit model
+
+fit_mr2 <- brm(form_mr2, 
+            data = dat, 
+            data2 = list(vcv = vcv),
+            chains = 2, 
+            cores = 2, 
+            iter = 3000, 
+            warmup = 2000,
+            #backend = "cmdstanr",
+            prior = prior_mr2,
+            #threads = threading(9),
+            control = list(adapt_delta = 0.99, max_treedepth = 15)
+)
+
+# save this as rds
+
+saveRDS(fit1b, here("Rdata", "fit1b.rds"))
+
+```
+
+```{r}
+#| warning: false
+#| echo: true
+#| 
+fit_mr2 <- readRDS(here("Rdata", "fit_mr2.rds"))
+
+summary(fit_mr2)
+```
+
 
 ### Visualzing meta-regression results (methodological)
 
 ```{r}
-#| fig-height: 7
-#| fig-width: 15
+# getting plots
+plots_fit_mr2 <- list(
+  visualize_fixed_effects(fit_mr2),
+  visualize_random_effects(fit_mr2)
+)
 
 
+plots_fit_mr2[[1]] / plots_fit_mr2[[2]]
 ```
 
+### Visualzing effect sizes with a orchard plot (methodolgical)
+
+```{r}
+# using metafor and use heteroscad model
+# see - Nakagawa S, Lagisz M, O'Dea RE, Pottier P, Rutkowska J, Senior AM, Yang Y, Noble DW. orchaRd 2.0: An R package for visualising meta-analyses with orchard plots.
+mr2_mod <- rma.mv(yi = dARR, 
+                  V =  vcv,
+                  mod = ~ method,
+                  random = list(~1 | study_ID,
+                                ~method | es_ID),
+                  struct = "DIAG",
+                  data = dat, 
+                  test = "t",
+                  sparse = TRUE,
+                  control=list(optimizer="optim", optmethod="Nelder-Mead")
+)
+
+orchard_plot(mr2_mod, mod = "method", group = "study_ID", xlab = "Effect size")
+```
 
 
 ## Location-scale phylogenetic meta-regression (biological)
@@ -524,9 +614,6 @@ TODO - the tree can be obtained from the code ....
 ### Visualzing phylogenetic meta-regression results
 
 ```{r}
-#| fig-height: 7
-#| fig-width: 15
-
 
 ```
 
@@ -537,6 +624,213 @@ TODO - the tree can be obtained from the code ....
 Data source (illustrative):
 Midolo, G. et al. (2019). Global patterns of intraspecific leaf trait responses to elevation. Global Change Biology, 25(7), 2485–2498.
 
+
+## Loading the data
+
+This dataset (thermal.csv) has an effect size dARR and sampling variance Var_dARR. A key moderator is habitat (e.g., aquatic vs. terrestrial).
+
+```{r}
+dat <- read.csv(here("data", "elevation.csv"))
+
+dat <- escalc(measure = "ROM", 
+              m1i = treatment, 
+              m2i = control, 
+              sd1i = sd_treatment, 
+              sd2i = sd_control, 
+              n1i = n_treatment, 
+              n2i = n_control, 
+              data = dat)
+
+
+# renaming
+dat$study_ID <- as.factor(dat$Study_ID)
+dat$es_ID <- as.factor(1:nrow(dat))
+
+# selecting varaibles we need
+dat <- dat %>% select(yi, vi, es_ID, study_ID, elevation_log)
+
+#head(dat)
+str(dat)
+
+# If needed, create effect-size IDs
+# dat$es_ID <- as.factor(1:nrow(dat))
+# dat$study_ID <- <some factor> if multiple effect sizes per study
+```
+
+## Creating a variance-covariance matrix for sampling errors
+
+### Assuming indepedence among effect sizes
+
+If each effect size has an independent sampling error, we can build a diagonal matrix:
+
+```{r}
+vcv <- diag(dat$vi)
+rownames(vcv) <- dat$es_ID
+colnames(vcv) <- dat$es_ID
+```
+
+
+## Multilevel location-scale meta-analysis
+
+```{r}
+#| eval: false
+
+#TODO - may need to rerun this model
+
+form_ma2 <- bf(yi
+             ~ 1   +
+               (1|p|study_ID) + # this is u
+               (1|gr(es_ID, cov = vcv)), # this is m
+             sigma ~ 1 + (1|p|study_ID)
+)
+
+
+
+prior_ma2 <- default_prior(form_ma2, 
+                         data = dat, 
+                         data2 = list(vcv = vcv),
+                         family = gaussian()
+)
+
+# fixing the varaince to 1 (meta-analysis)
+prior_ma2$prior[5] = "constant(1)"
+prior_ma2 
+# fit model
+
+fit_ma2 <- brm(form_ma2, 
+             data = dat, 
+             data2 = list(vcv = vcv),
+             chains = 2, 
+             cores = 2, 
+             iter = 6000, 
+             warmup = 3000,
+             prior = prior_ma2,
+             control = list(adapt_delta = 0.95, max_treedepth = 15)
+)
+
+# save this as rds
+
+saveRDS(fit_ma2, here("Rdata", "fit_ma2.rds"))
+
+```
+
+```{r}
+#| warning: false
+#| echo: true
+
+fit_ma2 <- readRDS(here("Rdata", "fit_ma2.rds"))
+
+summary(fit_ma2)
+```
+
+
+### Visualzing meta-analytic results
+
+```{r}
+# getting plots
+plots_fit_ma2 <- list(
+  visualize_fixed_effects(fit_ma2),
+  visualize_random_effects(fit_ma2),
+  visualize_correlations(fit_ma2)
+)
+
+
+plots_fit_ma2[[1]] / plots_fit_ma2[[2]] / plots_fit_ma2[[3]]
+```
+
+
+TODO - probably try to get - CV and I2????
+
+## Location-scale meta-regression with a contnious moderator
+
+```{r}
+#| eval: false
+
+#TODO - may need to rerun this model
+
+# SMD = d 
+form_mr3 <- bf(yi
+            ~ 1  + elevation_log +
+              (1|study_ID) + # this is u
+              (1|gr(es_ID, cov = vcv)), # this is m
+            sigma ~ 1 + elevation_log
+)
+
+
+# create prior
+
+
+prior_mr3 <- default_prior(form_mr3, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+# fixing the varaince to 1 (meta-analysis)
+prior_mr3$prior[5] = "constant(1)"
+prior_mr3 
+
+# fit model
+fit_mr3 <- brm(form_mr3, 
+            data = dat, 
+            data2 = list(vcv = vcv),
+            chains = 2, 
+            cores = 2, 
+            iter = 6000, 
+            warmup = 3000,
+            prior = prior_mr3,
+            control = list(adapt_delta = 0.95, max_treedepth = 15)
+)
+
+# save this as rds
+
+saveRDS(fit_mr3, here("Rdata", "fit_mr3.rds"))
+
+```
+
+```{r}
+#| warning: false
+#| echo: true
+#| 
+fit_mr3 <- readRDS(here("Rdata", "fit_mr3.rds"))
+
+summary(fit_mr3)
+```
+
+
+### Visualzing meta-regression results
+
+```{r}
+# getting plots
+plots_fit_mr3 <- list(
+  visualize_fixed_effects(fit_mr3),
+  visualize_random_effects(fit_mr3)
+)
+
+
+plots_fit_mr3[[1]] / plots_fit_mr3[[2]]
+```
+
+
+### Visualzing effect sizes with a buble plot
+
+```{r}
+# using metafor and orchaRd
+# see - Nakagawa S, Lagisz M, O'Dea RE, Pottier P, Rutkowska J, Senior AM, Yang Y, Noble DW. orchaRd 2.0: An R package for visualising meta-analyses with orchard plots.
+mr3_mod <- rma.mv(yi = yi, 
+                  V =  vcv,
+                  mod = ~ elevation_log,
+                  random = list(~1 | study_ID,
+                                ~1 | es_ID),
+                  #struct = "DIAG",
+                  data = dat, 
+                  test = "t",
+                  sparse = TRUE,
+                  control=list(optimizer="optim", optmethod="Nelder-Mead")
+)
+
+bubble_plot(mr3_mod, mod = "elevation_log", group = "study_ID", g = TRUE)
+```
 
 
 
@@ -947,6 +1241,7 @@ In ...
 # Software and package versions  
 
 ```{r}
+#| code-fold: true
 sessionInfo() %>% pander()
 ```
 

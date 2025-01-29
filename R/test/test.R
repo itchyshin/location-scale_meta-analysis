@@ -398,8 +398,12 @@ summary(fit1b)
 ###########################
 
 dat <- read.csv(here("data", "elevation.csv"))
+dim(dat)
+# filter data LMA
 
-head(dat)
+dat <- dat %>% filter(trait == "Narea")
+
+dim(dat)
 
 dat$study_ID <- as.factor(dat$Study_ID)
 dat$es_ID <- as.factor(1:nrow(dat))
@@ -482,8 +486,8 @@ fit2 <- brm(form2,
             data2 = list(vcv = vcv),
             chains = 2, 
             cores = 2, 
-            iter = 6000, 
-            warmup = 3000,
+            iter = 10000, 
+            warmup = 5000,
             #backend = "cmdstanr",
             prior = prior2,
             #threads = threading(9),
@@ -523,11 +527,9 @@ fit2b <- brm(form2b,
              data2 = list(vcv = vcv),
              chains = 2, 
              cores = 2, 
-             iter = 6000, 
-             warmup = 3000,
-             #backend = "cmdstanr",
+             iter = 16000, 
+             warmup = 10000,
              prior = prior2b,
-             #threads = threading(9),
              control = list(adapt_delta = 0.95, max_treedepth = 15)
 )
 
@@ -570,9 +572,7 @@ fit3 <- brm(form3,
             cores = 2, 
             iter = 6000, 
             warmup = 3000,
-            #backend = "cmdstanr",
             prior = prior3,
-            #threads = threading(9),
             control = list(adapt_delta = 0.95, max_treedepth = 15)
 )
 
@@ -587,6 +587,26 @@ saveRDS(fit3, here("Rdata", "fit3.rds"))
 fit3 <- readRDS(here("Rdata", "fit3.rds"))
 
 summary(fit3)
+
+# metafor 
+
+mr3_mod <- rma.mv(yi = yi, 
+                 V =  vcv,
+                 mod = ~ elevation_log,
+                 random = list(~1 | study_ID,
+                               ~1 | es_ID),
+                 #struct = "DIAG",
+                 data = dat, 
+                 test = "t",
+                 sparse = TRUE,
+                 control=list(optimizer="optim", optmethod="Nelder-Mead")
+)
+
+bubble_plot(mr3_mod, mod = "elevation_log", group = "study_ID", g = TRUE, 
+            xlab = "ln(elevation difference) (moderator)",
+            ylab = "SDM (effect size)",
+            k.pos = "top.left",
+            legend.pos = "bottom.left")
 
 
 # ##################

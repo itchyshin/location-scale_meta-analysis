@@ -439,7 +439,7 @@ print(res2a)
 
 ### Using `blsmeta`
 
-```{r}
+
 #| eval: false
 
 fit_ma10 <- blsmeta(yi = dARR,
@@ -463,4 +463,3 @@ res1a <- readRDS(here("Rdata", "res1a.rds"))
 
 print(res1a)
 
-```

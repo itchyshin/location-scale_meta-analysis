@@ -368,7 +368,8 @@ TODO - write the importance of modeling sampling error as the random effects and
 ```{r}
 #| eval: false
 
-form1 <- bf(dARR | se(si) ~ 1 + habitat, # this is e
+form1 <- bf(dARR | se(si) ~ 1 + habitat + 
+              (1|study_ID), # this is u
             sigma ~ 1 + habitat
 )
 
@@ -387,14 +388,15 @@ ma1 <- brm(form1,
            control = list(adapt_delta = 0.99, max_treedepth = 20)
 )
 
-# this is wrong too - as it mulitple sigma^2 to sampling variance 
-#(in meta-analysis, sampling varaince is assumed to be known)
+# this is wrong too - as it multiple sigma^2 to sampling variance 
+#(in meta-analysis, sampling variance is assumed to be known)
 
-form2 <- bf(dARR | se(si, sigma = TRUE) ~ 1 + habitat, # this is e
+form2 <- bf(dARR | se(si, sigma = TRUE) ~ 1 + habitat +
+               (1|study_ID), # this is u
             sigma ~ 1 + habitat
 )
 
-prior2 <- default_prior(form1, 
+prior2 <- default_prior(form2, 
                         data = dat, 
                         family = gaussian()
 )
@@ -406,19 +408,43 @@ ma2 <- brm(form2,
            cores = 2, 
            iter = 5000, 
            warmup = 2000,
-           prior = prior1,
+           prior = prior2,
            control = list(adapt_delta = 0.99, max_treedepth = 20)
 )
+
+# save this as rds
+saveRDS(ma2, here("Rdata", "ma2.rds"))
 ```
 
+```{r}
+#| warning: false
+#| echo: true
+
+ma2 <- readRDS(here("Rdata", "ma2.rds"))
+
+#
+summary(ma2)
+```
+
+Yet this is not a probably location-scale meta-regression. Symbolically, this model can be written as
+
+$$
+y_i = \beta_0^{(l)} + \beta_1^{(l)} x_{1i} + u_{j[i]}^{(l)} + e_i^{(l)},
+$$
+$$
+\ln(\sigma_{e_i}) = \beta_0^{(s)} + \beta_1^{(s)} x_{1i},
+$$
+
+$$
+u_j^{(l)} \sim \mathcal{N}(0,\sigma_{u(l)}^{2}) \space \text{and} \space \space e_i \sim \mathcal{N}(0,\sigma_e^2 \sigma_{m_i}^2), 
+$$
+As you see above, the sampling variance is merged with the residual variance (the within-study variance) and this is not a location-scale model, which we define in the main text
 
 :::
 :::
 
 ```{r}
 #| eval: false
-
-#TODO - may need to rerun this model
 
 # p in the random effects in location and scale parts allows correlation to be modeled 
 form_ma1 <- bf(dARR
@@ -453,7 +479,6 @@ fit_ma1 <- brm(
 
 # save this as rds
 saveRDS(fit_ma1, here("Rdata", "fit_ma1.rds"))
-
 ```
 
 ```{r}
@@ -477,7 +502,6 @@ plots_fit_ma1 <- list(
   visualize_correlations(fit_ma1)
 )
 
-
 plots_fit_ma1[[1]] / plots_fit_ma1[[2]] / plots_fit_ma1[[3]]
 ```
 
@@ -497,7 +521,6 @@ plots_fit_ma1[[1]] / plots_fit_ma1[[2]] / plots_fit_ma1[[3]]
 
 ```{r}
 #| eval: false
-#TODO - may need to rerun this model
 
 # biological - meta-regression
 form_mr1 <- bf(dARR
@@ -507,8 +530,7 @@ form_mr1 <- bf(dARR
             sigma ~ 1 + habitat
 )
 
-
-# create prior
+# create a prior
 
 prior_mr1 <- default_prior(form1, 
                         data = dat, 
@@ -556,7 +578,6 @@ plots_fit_mr1 <- list(
   visualize_random_effects(fit_mr1)
 )
 
-
 plots_fit_mr1[[1]] / plots_fit_mr1[[2]]
 ```
 
@@ -586,8 +607,6 @@ orchard_plot(mr1_mod, mod = "habitat", group = "study_ID", xlab = "Effect size")
 
 ```{r}
 #| eval: false
-
-#TODO - may need to rerun this model
 
 form_mr2 <- bf(dARR
             ~ 1  + method +
@@ -632,7 +651,7 @@ saveRDS(fit1b, here("Rdata", "fit1b.rds"))
 ```{r}
 #| warning: false
 #| echo: true
-#| 
+
 fit_mr2 <- readRDS(here("Rdata", "fit_mr2.rds"))
 
 summary(fit_mr2)
@@ -979,10 +998,7 @@ fit_ma3 <- brm(form_ma3,
             control = list(adapt_delta = 0.99, max_treedepth = 15)
 )
 
-summary(fit_ma3)
-
 # save this as rds
-
 saveRDS(fit_ma3, here("Rdata", "fit_ma3.rds"))
 ```
 
@@ -995,7 +1011,7 @@ fit_ma3 <- readRDS(here("Rdata", "fit_ma3.rds"))
 summary(fit_ma3)
 ```
 
-The parameters are not mixing well and we have covergence issues which are also clear from the fig below. 
+The parameters are not mixing well and we have convergence issues which are also clear from the fig below. 
 
 ### Visualzing meta-analytic results (without correlation)
 
@@ -1016,8 +1032,6 @@ plots_fit_ma3[[1]] / plots_fit_ma3[[2]] / plots_fit_ma3[[3]]
 
 ```{r}
 #| eval: false
-
-#TODO - may need to rerun this model
 
 # no correlation 
 # this runs but the one with correlation does not mix well
@@ -1073,7 +1087,7 @@ fit_ma4 <- readRDS(here("Rdata", "fit_ma4.rds"))
 summary(fit_ma4)
 ```
 
-The parameters are not mixing well and we have covergence issues which are also clear from the fig below. 
+The parameters are not mixing well and we have convergence issues which are also clear from the fig below. 
 
 ### Visualzing meta-analytic results (without correlation)
 
@@ -1097,13 +1111,12 @@ TODO - it is mixing well
 ```{r}
 #| eval: false
 
-#TODO - may need to rerun this model
-
 form_mr4 <- bf(smd
-             ~ 1   +
+             ~ 1   + se + cyear +
                (1|p|study_ID) + # this is u
                (1|gr(es_ID, cov = vcv)), # this is m
-             sigma ~ 1 + (1|p|study_ID)
+             sigma ~ 1 + se + cyear +
+               (1|p|study_ID)
 )
 
 
@@ -1115,8 +1128,8 @@ prior_mr4 <- default_prior(form_mr4,
 )
 
 # fixing the varaince to 1 (meta-analysis)
-prior4b$prior[5] = "constant(1)"
-prior4b 
+prior_mr4$prior[8] = "constant(1)"
+prior_mr4 
 # fit model
 
 fit_mr4 <- brm(form_mr4, 

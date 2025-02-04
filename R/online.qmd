@@ -165,13 +165,19 @@ pacman::p_load(
 
 :::{.column-margin}
 :::{.callout-note}
-not about functions to install.....
+
+For two packages, one needs to download from GitHub repositories. 
 
 ```{r}
+pacman::p_load(devtools, tidyverse, metafor, patchwork, R.rsp, emmeans)
 
+# install orchaRd
+devtools::install_github("daniel1noble/orchaRd", force = TRUE)
+
+# install blsmeta
+
+devtools::install_github("donaldRwilliams/blsmeta")
 ```
-
-It's important...
 
 :::
 :::

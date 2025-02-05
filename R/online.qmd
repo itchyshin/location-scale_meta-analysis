@@ -1,5 +1,5 @@
 ---
-title: "**Location-scale Meta-analysis and Meta-regression as a Tool to Capture Large-scale Changes in Biological and MethodologicalHeterogeneity: a Spotlight on Heteroscedasticity**"
+title: "**Location-scale Meta-analysis and Meta-regression as a Tool to Capture Large-scale Changes in Biological and Methodological Heterogeneity: a Spotlight on Heteroscedasticity**"
 author: "**TBA**"
 date: "`r Sys.Date()`"
 format:
@@ -40,155 +40,77 @@ knitr::opts_chunk$set(
 ```
 
 
-# Introduction (Outline)
+# Update
 
-Here, we illustrates how to fit location-scale meta-analysis and meta-regression models in R, using `brms` (Bayesian approach), demonstrating how to model both mean (location) and variance (scale) components under a meta-analytic framework.
+Last update February 2025.
 
-We cover:
-	1.	A dataset with a categorical moderator (e.g., habitat type).
-	2.	A dataset with a continuous moderator (e.g., log-elevation).
-	3.	An example showing how to examine publication biases in both location and scale parts (e.g., small-study divergence, Proteus effect).
-	
-	
-For each example, we start with fitting the following location-scale model (or double-hierarchical model):
+We will update this tutorial when necessary. Readers can access the latest version in our [GitHub repository](https://github.com/itchyshin/location-scale_meta-analysis).
 
-$$
-y_i = \beta_0^{(l)} +  u_{j[i]}^{(l)} + e_i^{(l)} + m_i^{(l)},
-$$
-$$
-\ln(\sigma_{e_i}) = \beta_0^{(s)} + u_{j[i]}^{(s)}.
-$$
-$$
-\begin{equation}
-\begin{pmatrix} u_j^{(l)} \\ 
-u_j^{(s)} \end{pmatrix}
-\sim \mathcal{N}\left(
-\begin{pmatrix}0 \\ 0\end{pmatrix},
-\begin{pmatrix}
-\sigma_{u(l)}^{2} & \rho_u \sigma_{u(l)} \sigma_{u(s)} \\
-\rho_u \sigma_{u(l)} \sigma_{u(s)} & \sigma_{u(s)}^{2}
-\end{pmatrix}
-\right).
-\end{equation}
-$$
+If you have any questions, errors or bug reports, please contact Dr. Yefeng Yang (yefeng.yang1@unsw.edu.au) or Professor Shinichi Nakagawa (snakagaw@ualberta.ca).
 
 
-$$
-e_i \sim \mathcal{N}(0,\sigma_e^2), \space \text{and} \space m_i \sim \mathcal{N}(0,\sigma_{m_i}^2).
-$$
+# Introduction
 
-TODO - description....
-
-For Example 3, we also use:
-
-$$
-\begin{equation}
-\begin{pmatrix} u_j^{(l)} \\ 
-u_j^{(s)} \end{pmatrix}
-\sim \mathcal{N}\left(
-\begin{pmatrix}0 \\ 0\end{pmatrix},
-\begin{pmatrix}
-\sigma_{u(l)}^{2} & 0 \\
-0 & \sigma_{u(s)}^{2}
-\end{pmatrix}
-\right).
-\end{equation}
-$$
+This online material is a supplement to the paper about multilevel location-scale meta-analysis and meta-regression. The main aim of this online material is to provide a comprehensive hands-on guide for the implementation of location-scale meta-analysis and meta-regression. While we try to make this online material as stand-along as possible (see below), we do not have too much explanation of the theories underpinning the location-scale meta-analysis and meta-regression. Therefore, we recommend readers to read the associated paper for theoretical background, formulas, and details on location-scale models in ecology and evolution.
 
 
-Then, we fit the following location-scale meta-regression
+# Content
 
-$$
-y_i = \beta_0^{(l)} + \beta_1^{(l)} x_{1i} + \cdots + \beta_p^{(l)} x_{pi} + u_{j[i]}^{(l)} + e_i^{(l)} + m_i^{(l)},
-$$
-$$
-\ln(\sigma_{e_i}) = \beta_0^{(s)} + \beta_1^{(s)} x_{1i} + \cdots + \beta_p^{(s)} x_{pi},
-$$
+In this online material, we will illustrates how to fit:
 
-$$
-u_j^{(l)} \sim \mathcal{N}(0,\sigma_{u(l)}^{2}), \space e_i \sim \mathcal{N}(0,\sigma_e^2), \space \text{and} \space m_i \sim \mathcal{N}(0,\sigma_{m_i}^2)
-$$
-TODO - description....
+- Normal random-effects meta-analyses (including a trick to speed up Markov chain Monte Carlo in `brms`)
 
+- Location-scale random-effects meta-regression
 
-For Example 1, we also fit a phylogenetic location-scale meta-regression as follows:
-	
-$$
-y_i = \beta_0 + a_{k[i]} + s_{k[i]} + u_i + e_i + m_i
-$$
+- Multilevel meta-analysis and location-scale meta-regression, including categorical and continuous moderator variables (with a bonus about how to derive heterogeneity from these 'new' models)
 
-$$
-\ln(\sigma_{e_i}) = \beta_0^{(s)} + \beta_1^{(s)} x_{1i} + \cdots + \beta_p^{(s)} x_{pi},
-$$
-$$
-a_k^{(l)} \sim \mathcal{N}(0,\sigma_{a(l)}^{2}\mathbf{A}),
-\space
-\text{and}
-\space
-s_k^{(l)} \sim \mathcal{N}(0,\sigma_{s(l)}^{2}).
-$$
+- Multilevel location-scale meta-regression examining publication biases, including small-study effect, small-study divergence, time-lag bias, and Proteus effect
 
-with
-	
-$$
-u_j^{(l)} \sim \mathcal{N}(0,\sigma_{u(l)}^{2}), \space e_i \sim \mathcal{N}(0,\sigma_e^2), \space \text{and} \space m_i \sim \mathcal{N}(0,\sigma_{m_i}^2).
-$$	
-TODO - description....	
-	
-Later, we use `metafor` (a frequentist implementation)  and `blsmeta` (another Bayesian implementation) to check if results from `brms` match those from `metafor` and `blsmeta` when we use the same model.
+The illustration will be based on three publicly available datasets (which are corresponding to **Examples 1 to 3**). Thanks to the excellent work done by researchers such as Paul-Christian Bürkner and Wolfgang Viechtbauer, who have developed amazing software. Therefore, all illustrations will be based on readily available software such as the `R` packages `brms` (Bayesian implementation), `blsmeta` (Bayesian implementation) and `metafor` (frequentist implementation).
 
-Please refer to the associated paper for theoretical background, formulas, and details on location-scale models in ecology and evolution.
+All results presented in this online material are for illustrative purposes only and should not be used to draw substantive conclusions or policy implications.
+
 
 # Prerequisites
 
 ## Loading pacakges
 
-```{r packages}
+Our tutorial uses `R` statistical software and existing `R` packages, which you will first need to download and install. 
 
-# Attempt to load or install necessary packages
+If the packages are archived in CRAN, use `install.packages()` to install them. For example, to install the `brms` , you can execute `install.packages("brms")` in the console (bottom left pane of `R Studio`). 
+To install packages that are not on CRAN and archived in Github repositories, execute `devtools::install_github()`. For example, to install `blsmeta` from Github repository, execute `devtools::install_github("donaldRwilliams/blsmeta")` (make sure you have `devtools` installed; if not, execute `install.packages("devtools")`). For `orchaRd`, execute `devtools::install_github("daniel1noble/orchaRd", force = TRUE)`.
+
+Version information of each pacakge is listed at the end of this tutorial.
+
+```{r packages}
+# attempt to load or install necessary packages
 if(!require(pacman)) install.packages("pacman")
 pacman::p_load(
   tidyverse,
   tidybayes,
   here,
   patchwork,
-  orchaRd,  # see the note
+  orchaRd, # devtools::install_github("daniel1noble/orchaRd", force = TRUE)
   ggplot2,
   pander,
   brms,
   metafor,
-  blsmeta # see the note
+  blsmeta, # devtools::install_github("donaldRwilliams/blsmeta")
+  ape,
+  ggtree
 )
 
 ```
 
 
-:::{.column-margin}
-:::{.callout-note}
+## Custum functions
 
-For two packages, one needs to download from GitHub repositories. 
+We also provide some additional helper functions to help visualise the results (mainly extracted from the `brms` object). The most straightforward way to use these custom functions is to run the code chunk below. Alternatively, paste the code into the console and hit `Enter` to have `R` ‘learn’ these custom functions.
 
-```{r}
-pacman::p_load(devtools, tidyverse, metafor, patchwork, R.rsp, emmeans)
-
-# install orchaRd
-devtools::install_github("daniel1noble/orchaRd", force = TRUE)
-
-# install blsmeta
-devtools::install_github("donaldRwilliams/blsmeta")
-```
-
-:::
-:::
-
-
-## Adding custum functions
-
-These functions are to visualize `brms` results
+If you want to use these custom functions in your own data, you'll need to change the variable names according to your own data (check out the `R` code and you'll see what we mean).
 
 ```{r}
 #| code-fold: true
-
 # Function to get variable names dynamically
 get_variables_dynamic <- function(model, pattern) {
   variables <- get_variables(model)
@@ -196,26 +118,19 @@ get_variables_dynamic <- function(model, pattern) {
 }
 
 rename_vars <- function(variable) {
-  variable <- gsub("b_Intercept", "b_l_intercept", variable)
-  variable <- gsub("b_sigma_Intercept", "b_s_intercept", variable)  
+  variable <- gsub("b_Intercept", "b_l_int", variable)
+  variable <- gsub("b_sigma_Intercept", "b_s_int", variable)  
   variable <- gsub("b_habitatterrestrial", "b_l_contrast", variable)            
   variable <- gsub("b_sigma_habitatterrestrial", "b_s_contrast", variable)
   variable <- gsub("b_methodpersisitent", "b_l_contrast", variable)            
   variable <- gsub("b_sigma_methodpersisitent", "b_s_contrast", variable)
-  variable <- gsub("b_elevation_log", "b_l_elevation", variable)            
-  variable <- gsub("b_sigma_elevation_log", "b_s_elevation", variable)
-  variable <- gsub("b_se", "b_l_se", variable) # 
-  variable <- gsub("b_sigma_se", "b_s_se", variable) # 
-  variable <- gsub("b_cyear", "b_l_cyear", variable) # 
-  variable <- gsub("b_sigma_cyear", "b_s_cyear", variable) #
-  variable <- gsub("sd_study_ID__Intercept", "sd_l_study_ID", variable)  
-  variable <- gsub("sd_species_ID__Intercept", "sd_l_species_ID", variable)            
-  variable <- gsub("sd_phylogeny__Intercept", "sd_l_phylogeny", variable)
+  variable <- gsub("b_elevation_log", "b_l_slope", variable)            
+  variable <- gsub("b_sigma_elevation_log", "b_s_slope", variable)
+  variable <- gsub("sd_study_ID__Intercept", "sd_l_study_ID", variable)            
   variable <- gsub("sd_study_ID__sigma_Intercept", "sd_s_study_ID", variable)
   variable <- gsub("cor_study_ID__Intercept__sigma_Intercept", "cor_study_ID", variable)  
   return(variable)
 }
-
 
 # Function to visualize fixed effects
 visualize_fixed_effects <- function(model) {
@@ -234,11 +149,12 @@ visualize_fixed_effects <- function(model) {
     ggplot(fixed_effects_samples, aes(x = .value, y = .variable)) +
       stat_halfeye(
         normalize = "xy", 
-        point_interval = "mean_qi", 
+        point_interval = "mean_qi",
+        .width = .95, 
         fill = "lightcyan3", 
         color = "lightcyan4"
       ) +
-      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "grey33") +
       labs(y = "Fixed effects", x = "Posterior values") +
       theme_classic()
   }, error = function(e) {
@@ -267,10 +183,11 @@ visualize_random_effects <- function(model) {
       stat_halfeye(
         normalize = "xy", 
         point_interval = "mean_qi", 
+        .width = .95, 
         fill = "olivedrab3", 
         color = "olivedrab4"
       ) +
-      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "grey33") +
       labs(y = "Random effects (SD)", x = "Posterior values") +
       theme_classic()
   }, error = function(e) {
@@ -295,11 +212,12 @@ visualize_correlations <- function(model) {
     
     ggplot(correlation_samples, aes(x = .value, y = .variable)) +
       stat_halfeye(
-        normalize = "xy", 
+        normalize = "xy",
+        .width = .95,
         fill = "#FF6347", 
         color = "#8B3626"
       ) +
-      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "grey33") +
       labs(y = "Correlations", x = "Posterior values") +
       theme_classic()
   }, error = function(e) {
@@ -310,85 +228,308 @@ visualize_correlations <- function(model) {
 ```
 
 
-# Example 1: Categorical Moderator (Thermal Tolerance Dataset)
+# Normal random-effects meta-analyses 
 
-Data source (illustrative):
-Pottier, P. et al. (2022). Developmental plasticity in thermal tolerance: Ontogenetic variation, persistence, and future directions. Ecology Letters, 25(10), 2245–2268.
+To start off, we illustrate how to fit normal random-effects meta-analyses using three packages: `metafor`, `brms` and `blsmeta`. As you will see soon, all three packages lead to the same results.
 
-## Loading the data
+## Data
 
-This dataset (thermal.csv) has an effect size `dARR` (the developmental acclimation response ratio: the ratio of the slopes of acclimation) and sampling variance `Var_dARR`. Key moderators are two categorical variables: (1) `habitat` (e.g., aquatic vs. terrestrial: where animals live) and (2) `method` (initial vs. persisitent: experimental design where only temparature increase was applied during initial phases or over the entire experimental period).
+We use the data (hereafter **Example 1**) from the following paper:
+
+> Pottier, P. et al. (2022). Developmental plasticity in thermal tolerance: Ontogenetic variation, persistence, and future directions. Ecology Letters, 25(10), 2245–2268.
 
 ```{r}
+# load
 dat <- read.csv(here("data", "thermal.csv"))
-
-# selecting varaibles we need
-dat <- dat %>% select(dARR, Var_dARR, es_ID, population_ID, study_ID, exp_design, habitat, phylogeny, species_ID)
-
-# creating SE (sqrt(Var))
+# select variables we need
+dat <- dat %>% select(dARR, Var_dARR, es_ID, population_ID, study_ID, exp_design, habitat)
+dat$study_ID <- as.numeric(dat$study_ID)
+# create SE (sqrt(Var))
 dat$si <- sqrt(dat$Var_dARR)
 
-# mending some species names in phylogeny
-
-dat$phylogeny[dat$phylogeny == "Oncorhynchus_mykiss_(species_in_domain_Eukaryota)"] <- 
-"Oncorhynchus_mykiss_-species_in_domain_Eukaryota"
-# creating a new variable (method) according to the oringal paper
+# for illustrative purpose, we create a new variable (method) according to the original paper
 dat$method <- ifelse(dat$exp_design == c("A", "B", "C"), "initial", "persisitent")
 
-#head(dat)
+# check the cleaned data
 str(dat)
 ```
 
-## Creating a variance-covariance matrix for sampling errors
 
-### Assuming indepedence among effect sizes
+## `metafor`
 
-If each effect size has an independent sampling error, we can build a diagonal matrix:
+A normal random-effects meta-analysis can be easily fitted via `rma()` from `metafor`:
 
 ```{r}
+# random effects - default
+fit_ma5 <- rma(yi = dARR, 
+               vi = Var_dARR, 
+               test="t",
+               data = dat)
+```
+
+Check the results:
+
+```{r}
+summary(fit_ma5)
+```
+
+Alternatively, we can use `rma.mv()`. One potential benefit of using `rma.mv()` is that we can (through the use of sparse matrices) speed up model fitting when we have a large number of observations in our dataset (well, we don't have a specific number for how large).
+
+```{r}
+# random effects - rma.mv
+fit_ma6 <- rma.mv(yi = dARR, 
+                  V = Var_dARR,
+                  random = ~ 1 | es_ID,
+                  test="t",
+                  data = dat,
+                  sparse = T)
+```
+
+Check the results:
+
+```{r}
+summary(fit_ma6)
+```
+
+
+## `brms`
+
+`brms` is powerful Bayesian modelling package. While it is a package that is dedicated to meta-analysis, it can be used to fit meta-analysis models. An important part of using Bayesian approach is to choose proper priors. For the illustrative purpose, we will use the default priors that are designed to be weakly informative so that they provide moderate regularization and help stabilize computation. In your own analysis, you should choose more informative priors via, for example, prior elicitation. 
+
+Also, for the illustrative purpose, we only use 2 Markov chains (`chains = 2`). In your own analysis, you might use more Markov chains, say, 4.
+
+```{r}
+#| eval: false
+# construct formula
+form_ma7 <- bf(dARR | se(si) ~ 1 +  (1|es_ID))
+
+# set-up prior; for the illustration purpose, we used the default prior
+prior_ma7 <- default_prior(form_ma7, 
+                        data = dat, 
+                        family = gaussian())
+
+# fit the model with 
+fit_ma7 <- brm(form_ma7, 
+            data = dat, 
+            chains = 2, 
+            cores = 2, 
+            iter = 35000, 
+            warmup = 5000,
+            prior = prior_ma7,
+            control = list(adapt_delta = 0.99, max_treedepth = 20))
+
+
+# save as rds
+saveRDS(fit_ma7, here("Rdata", "fit_ma7.rds"))
+```
+
+Given that it takes some time to run the `brms` model, you can download our pre-fitted `brms` model objects from: 
+https://www.dropbox.com/scl/fo/tq2ogshquc5pa6zn6pr58/APG2gtCb6tSKgEnW3KgGJYY?rlkey=xrq6io33vu38txmtu71hpq4un&e=1&dl=0.
+
+Let's load the pre-fitted `brms` model and check the results:
+
+```{r}
+# load the pre-fitted model
+fit_ma7 <- readRDS(here("Rdata", "fit_ma7.rds"))
+summary(fit_ma7)
+```
+
+There are two alternative ways to use `brms` to fit a meta-analysis. Both of them involve using the correlation/covariance matrix of effect size estimates (known as variance-covariance matrix of sampling errors in the context of meta-analysis).
+
+First, let's create a variance-covariance matrix for sampling errors:
+
+```{r}
+# assuming independence of each effect size
 vcv <- diag(dat$Var_dARR)
 rownames(vcv) <- dat$es_ID
 colnames(vcv) <- dat$es_ID
 ```
 
-### Modeling non-independence
-
-In reality, non-independence of sampling errors are common (effect sizes are obtained partially or all from the same subjects or individuals)
+(1) Use `fcor()` to incorporate the constructed variance-covariance matrix:
 
 ```{r}
 #| eval: false
-# here correlated structure or cluster is population_ID
-# vcalc is from the metafor pacakge
-# we will not sue this for models but this is for demonstration
+form_ma8 <- bf(dARR  ~ 1 + (1|es_ID) 
+            + fcor(vcv))
 
-vcv2 <- vcalc(vi = Var_dARR, 
-             cluster = population_ID, 
-             obs = es_ID, rho = 0.5, 
-             data = dat)
-rownames(vcv2) <- dat$es_ID
-colnames(vcv2) <- dat$es_ID
+prior_ma8 <- default_prior(form_ma8, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian())
+
+# we need to fix the variance to 1 = fcor(vcv)
+prior_ma8$prior[5] = "constant(1)"
+
+fit_ma8 <- brm(form_ma8, 
+           data = dat, 
+           data2 = list(vcv = vcv),
+           chains = 2, 
+           cores = 2, 
+           iter = 15000, 
+           warmup = 5000,
+           prior = prior_ma8,
+           control = list(adapt_delta = 0.99, max_treedepth = 20)
+)
+
+# save as rds
+saveRDS(fit_ma8, here("Rdata", "fit_ma8.rds"))
 ```
 
-## Multilevel location-scale meta-analysis
+Check the results:
+```{r}
+# load rds
+fit_ma8 <- readRDS(here("Rdata", "fit_ma8.rds"))
+summary(fit_ma8)
+```
 
-:::{.column-margin}
-:::{.callout-important}
+(2) In `brms`, the argument `gr` also can be specified as variance-covariance matrix. Contrary to the original use of it (which is used for modelling pedigrees and phylogenetic effects), we can also use it to account for variance-covariance matrix of sampling errors (see more explanation below).
 
-TODO - write the importance of modeling sampling error as the random effects and also fixing its variance as 1 and why
+The syntax looks simple as follows:
 
 ```{r}
 #| eval: false
-
-form1 <- bf(dARR | se(si) ~ 1 + habitat + 
-              (1|study_ID), # this is u
-            sigma ~ 1 + habitat
+form_ma9 <- bf(dARR  ~ 1 +   
+              (1|gr(es_ID, cov = vcv)), 
 )
+prior_ma9 <- default_prior(form_ma9, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+# fixing the varaince to 1 (meta-analysis)
+prior_ma9$prior[3] = "constant(1)"
+prior_ma9 
+
+fit_ma9 <- brm(form_ma9, 
+           data = dat, 
+           data2 = list(vcv = vcv),
+           chains = 2, 
+           cores = 2, 
+           iter = 3000, 
+           warmup = 2000,
+           prior = prior_ma9)
+
+saveRDS(fit_ma9, here("Rdata", "ma9.rds"))
+```
+
+Note that this model covered more quickly compared to the first and second `brms` models:
+
+```{r}
+fit_ma9 <- readRDS(here("Rdata", "fit_ma9.rds"))
+summary(fit_ma9)
+```
+
+
+## `blsmeta`
+
+`blsmeta` also provides a Bayesian way to fit a random-effects meta-analysis.
+The syntax is looks more similar to that from `metafor`:
+
+```{r}
+# random-effects meta-analysis
+fit_ma10 <- blsmeta(yi = dARR, 
+                    vi = Var_dARR, 
+                    es_id = es_ID,
+                    data = dat)
+saveRDS(fit_ma10, here("Rdata", "ma10.rds"))
+```
+
+Check the results:
+
+```{r}
+fit_ma10 <- readRDS(here("Rdata", "fit_ma10.rds"))
+print(fit_ma10)
+```
+
+
+# Random-effects location-scale meta-regression
+
+Now we illustrate how fit a location-scale random-effects meta-regression, which is corresponding to the Equations (7) to (9) presented in our paper. Location-scale random-effects meta-analysis is just a special case of location-scale random-effects meta-regression, which does not include moderating variables.
+
+The current version of `metafor` (`v4.7.53`), `brms` (`v2.22.0`) and `blsmeta` (`0.1.0`) are capable of fitting a location-scale random-effects meta-regression. 
+
+**Notes:**
+
+While `metafor` models the variance on the scale part, `brms` and `blsmeta` models standard deviation (square root of variance) so one needs to double regression coefficients on the scale part from `brms` and `blsmeta` to make them comparable. 
+
+## `metafor`
+
+We use the categorical variable `habitat` as the biological moderator. A random-effects meta-regression based on `metafor` can be fitted with:
+
+```{r}
+fit_mr5 <- rma(yi = dARR, 
+                vi = Var_dARR, 
+                mods = ~ habitat,
+                scale = ~ habitat,
+                test="t",
+                data = dat)
+```
+
+Check the results:
+
+```{r}
+summary(fit_mr5)
+```
+
+## `brms`
+
+An equivalent random-effects meta-regression based on `brms` can be fitted with:
+
+```{r}
+#| eval: false
+form_mr6 <- bf(dARR
+            ~ 1  + habitat + 
+              (1|gr(es_ID, cov = vcv)),
+            sigma ~ 1 + habitat)
+
+
+prior_mr6 <- default_prior(form_mr6, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian())
+
+# fixing the varaince to 1 (meta-analysis)
+prior_mr6$prior[5] = "constant(1)"
+prior_mr6 
+# fit model
+
+fit_mr6 <- brm(form_mr6, 
+            data = dat, 
+            data2 = list(vcv = vcv),
+            chains = 2, 
+            cores = 2, 
+            iter = 35000, 
+            warmup = 5000,
+            prior = prior_mr6,
+            control = list(adapt_delta = 0.95, max_treedepth = 15)
+)
+
+# save as rds
+saveRDS(fit_mr6, here("Rdata", "fit_mr6.rds"))
+```
+
+Check the results:
+
+```{r}
+fit_mr6 <- readRDS(here("Rdata", "fit_mr6.rds"))
+summary(fit_mr6)
+```
+
+
+There two potential mistakes when using `brms` to fit a location-scale meta-regression.
+
+Using the data from **Example 1** as the example, the first mistake is to set `se(si)` and `sigma ~ 1 + habitat` at the same time (where `si` is the standard error of the observations and `habitat` is the moderator of the scale parameter `sigma`). This is because setting `se(si)` means the scale parameter `sigma` is replaced by `si` and `brms` will not estimate the scale part of the location-scale meta-regression.
+
+It is easy to check it. Setting priors for such model structures will trigger the following error message `"Error: Cannot predict or fix 'sigma' in this model."`
+
+```{r}
+#| eval: false
+form1 <- bf(dARR | se(si) ~ 1 + habitat + (1|study_ID), # this is u
+            sigma ~ 1 + habitat)
 
 prior1 <- default_prior(form1, 
                         data = dat, 
-                        family = gaussian()
-)
-
+                        family = gaussian())
 ma1 <- brm(form1, 
            data = dat, 
            chains = 2, 
@@ -398,14 +539,19 @@ ma1 <- brm(form1,
            prior = prior1,
            control = list(adapt_delta = 0.99, max_treedepth = 20)
 )
+```
 
+The second potential mistake is to set `se(si, sigma = TRUE)` and `sigma ~ 1 + habitat`. This is because such a specification would assume that the sampling variance is not perfectly known, but only up to a constant of proportionality (the so-called residual variance).
+
+Ask Shinichi: actually, I am wondering whether this is really a mistake because I remember that only weighted regression with inverse-sampling-variances as weights will assume a multiplicative heterogeneity.
+
+```{r}
+#| eval: false
 # this is wrong too - as it multiple sigma^2 to sampling variance 
-#(in meta-analysis, sampling variance is assumed to be known)
-
-form2 <- bf(dARR | se(si, sigma = TRUE) ~ 1 + habitat +
-               (1|study_ID), # this is u
-            sigma ~ 1 + habitat
-)
+# (in meta-analysis, sampling variance is assumed to be known)
+form2 <- bf(dARR | se(si, sigma = TRUE) ~ 1 + habitat + 
+              (1|study_ID), # this is u
+            sigma ~ 1 + habitat)
 
 prior2 <- default_prior(form2, 
                         data = dat, 
@@ -430,44 +576,114 @@ saveRDS(ma2, here("Rdata", "ma2.rds"))
 ```{r}
 #| warning: false
 #| echo: true
-
 ma2 <- readRDS(here("Rdata", "ma2.rds"))
-
-#
 summary(ma2)
 ```
 
-Yet this is not a probably location-scale meta-regression. Symbolically, this model can be written as
 
-$$
-y_i = \beta_0^{(l)} + \beta_1^{(l)} x_{1i} + u_{j[i]}^{(l)} + e_i^{(l)},
-$$
-$$
-\ln(\sigma_{e_i}) = \beta_0^{(s)} + \beta_1^{(s)} x_{1i},
-$$
+## `blsmeta`
 
-$$
-u_j^{(l)} \sim \mathcal{N}(0,\sigma_{u(l)}^{2}) \space \text{and} \space \space e_i \sim \mathcal{N}(0,\sigma_e^2 \sigma_{m_i}^2), 
-$$
-As you see above, the sampling variance is merged with the residual variance (the within-study variance) and this is not a location-scale model, which we define in the main text
-
-:::
-:::
+The syntax based on `blsmeta` is:
 
 ```{r}
 #| eval: false
+fit_mr7 <- blsmeta(yi = dARR, 
+                    vi = Var_dARR, 
+                    es_id = es_ID,
+                    mods = ~ habitat,
+                    mods_scale2 = ~ habitat,
+                    data = dat)
+saveRDS(fit_mr7, here("Rdata", "fit_mr7.rds"))
+```
 
-# p in the random effects in location and scale parts allows correlation to be modeled 
-form_ma1 <- bf(dARR
-            ~ 1   +
+Check the results:
+
+```{r}
+fit_mr7 <- readRDS(here("Rdata", "fit_mr7.rds"))
+print(fit_mr7)
+```
+
+We can see that the results of both the location and scale (after multiplying 2 to coefficients from `metafor`) parts match very well.
+
+We are pleased to see that although different developers have used different implementation strategies in their software, the final results converge very well. However, unlike `brms` (`v2.22.0`), the current versions of `metafor` (`v4.7.53`) and `blsmeta` (`0.1.0`) have their own limitations when fitting more complex datasets (we will illustrate it below).
+
+# Multilevel meta-analysis and location-scale meta-regression
+
+In this section, we will use two example datasets to illustrate how to fit a multilevel meta-analysis and location-scale meta-regression. We will use the first example dataset (*Example 1*) to illustrate the categorical moderators, including both biological and methodological variables. The second example dataset (*Example 2*) will be used to illustrate the continuous moderators.
+
+`brms` will be our main force in the following illustration. Whenever possible, we will show the `R` code based on `metafor` and  `blsmeta` as well.
+
+## Example 1: Multilevel location-scale meta-regression with a categorical moderator
+
+### Data
+
+We use the data (hereafter **Example 1**) from the following paper:
+
+> Pottier, P. et al. (2022). Developmental plasticity in thermal tolerance: Ontogenetic variation, persistence, and future directions. Ecology Letters, 25(10), 2245–2268.
+
+This data were originally used to examine the capacity of animals to increase thermal tolerance via heat exposure. 
+
+Basic description of this dataset (`thermal.csv`):
+
+- `dARR` : effect size estimates, representing the developmental acclimation response ratio: the ratio of the slopes of acclimation
+
+- `Var_dARR`: sampling variance of `dARR`
+
+- `habitat`: a biological moderator (indicating where animals live), including two levels: aquatic vs. terrestrial
+
+- `method`: a methodological moderator (indicating experimental design where only temperature increase was applied during initial phases or over the entire experimental period), including two levels: initial vs. persistent
+
+```{r}
+dat <- read.csv(here("data", "thermal.csv"))
+# select variables we need
+dat <- dat %>% select(dARR, Var_dARR, es_ID, population_ID, study_ID, exp_design, habitat)
+
+# create SE (sqrt(Var))
+dat$si <- sqrt(dat$Var_dARR)
+
+# create a new variable (method) according to the oringal paper
+dat$method <- ifelse(dat$exp_design == c("A", "B", "C"), "initial", "persisitent")
+str(dat)
+```
+
+### Multilevel location-scale meta-analysis
+
+Let's start by fitting a multilevel location-scale meta-analysis (Equations (21) to and (23))
+
+In ecological and evolutionary meta-analyses, it is very common to include results from studies that report multiple effect sizes. For example, in **Example 1** (`thermal.csv`), each study contributes on average 7 effect sizes. Multiple effect sizes will produce various types of dependency structures in the meta-analysis data, including nested effect sizes and correlated sampling errors. Ignoring such dependency could distort the parameter estimates and inference.
+
+We start by fitting a multilevel location-scale meta-analysis accounting for nested effect sizes whilst assuming independent errors (for correlated errors, please refer to below):
+
+```{r}
+vcv <- diag(dat$Var_dARR)
+rownames(vcv) <- dat$es_ID
+colnames(vcv) <- dat$es_ID
+```
+
+Then, we specify the model structure of both location (Equation 21) and scale (Equation 22) parts via the function `bf`:
+
+```{r}
+#| eval: false
+form_ma1 <- bf(dARR ~ 1 +
               (1|p|study_ID) + # this is u_l (the between-study effect)
               (1|gr(es_ID, cov = vcv)), # this is m (sampling error)
             sigma ~ 1 + 
               (1|p|study_ID) # residual = the within-study effect goes to the scale
 )
+```
 
+**Two important tips:**
 
-# Generate default priors
+- `|p|` in the random effects in location and scale parts allows us to estimate correlations between random effects in the location and scale parts of our model. When you specify random effects in both the mean model (location part) and scale model (variance part) using the same grouping factor (`study_ID`), `brms` automatically estimates their correlation—but only if they are defined within the same partitioning factor (`p`; it is an arbitrary placeholder and can be replaced by any letter). The `|p|` tells `brms` to treat these random effects as a multivariate structure (Equation 20), where each `study_ID` has two correlated random intercepts: (1) one affecting `dARR` (the effect size location), and (2) one affecting `sigma` (the within-study variance).
+
+- Because location-scale model implemented in `brm()` is designed for general linear (mixed effects) regression framework, so we have to hack `brm()` to make it work for location-scale meta-analysis. The meta-analytic models are just a special case of a general linear (mixed effects) model, with one usual aspect that the variance of the error term (known as the sampling variance) is known. Therefore, to make `brm()` suitable for fitting a location scale meta-analytical model, we need to fix the `sigma` parameter (residual or error term) using the known sampling errors whilst making the `sigma` parameter is not fixed so that it could be estimated and modeled. 
+While it sounds counterintuitive and in-feasible, it can be achieved by the trick of `(1|gr(es_ID, cov = vcv))`. The intuition behind it is that we the known sampling errors to use the within-study-random-effect's placeholder so that sampling errors are accounted for but the within-study random effect needs to be estimated. Specifically, `(1 | ...)` defines a random intercept for each level of of observation (`es_ID`). `gr(es_ID, cov = vcv)` specify a pre-defined variance-covariance matrix `vcv` to account for the known sampling errors.
+ 
+In next step, we need to set up priors. As mentioned earlier, we use the default priors (for both the `location` and `scale` parts). The default priors in `brms` are weakly informative so that they provide moderate regularization and help stabilize computation. In your own analysis, you should choose more informative priors. 
+
+```{r}
+#| eval: false
+# generate default priors
 prior_ma1 <- default_prior(form_ma1, 
                           data=dat, 
                           data2=list(vcv=vcv),
@@ -492,20 +708,29 @@ fit_ma1 <- brm(
 saveRDS(fit_ma1, here("Rdata", "fit_ma1.rds"))
 ```
 
+Again, given that it takes some time to run the `brms` model, you can download our pre-fitted `brms` model objects from: https://www.dropbox.com/scl/fo/tq2ogshquc5pa6zn6pr58/APG2gtCb6tSKgEnW3KgGJYY?rlkey= xrq6io33vu38txmtu71hpq4un&e=1&dl=0.
+
 ```{r}
 #| warning: false
 #| echo: true
-
 fit_ma1 <- readRDS(here("Rdata", "fit_ma1.rds"))
-
 summary(fit_ma1)
 ```
 
-Note that there is non-zero variance (SD) in the between-study effect on the scale part as well as the location part. Also, there is a positive and significant correaltion ($\rho_u = 0.38$) between the location and scale between-study random effects.
+Note that there is non-zero variance (SD) in the between-study effect on the scale part as well as the location part. Also, there is a positive correlation ($\rho_u = 0.38$) between the location and scale between-study random effects.
 
-### Visualzing meta-analytic results
+### Visualzing location-scale meta-analysis
+
+One advantage of Bayesian approach is that we can get posterior distribution of each model parameters. Let's visualize the posterior distribution of three types of model parameters:
+
+- Regression coefficients of both location and scale parts
+
+- Various components of both location and scale parts
+
+- Correlation coefficients between location and scale parts
 
 ```{r}
+#| warning: false
 # getting plots
 plots_fit_ma1 <- list(
   visualize_fixed_effects(fit_ma1),
@@ -513,27 +738,114 @@ plots_fit_ma1 <- list(
   visualize_correlations(fit_ma1)
 )
 
+
 plots_fit_ma1[[1]] / plots_fit_ma1[[2]] / plots_fit_ma1[[3]]
 ```
 
-### Quantifying heterogeniety on the location and scale part
+### Quantifying heterogeneity on both location and scale parts
+
+In our main text, we also propose heterogeneity measures for location-scale models. Here, we illustrate how to calculate them from the `brms` object.
+
+For the total heterogeneity $I_{T}^2$, it can be computed with:
 
 ```{r}
+# create a function to calculate "typical" sampling variance
+compute_Vbar <- function(model) {
+  W <- solve(model$data2$vcv)
+  X <- make_standata(formula(model), data = model$data, data2 = model$data2)$X
+  P <- W - W %*% X %*% solve(t(X) %*% W %*% X) %*% t(X) %*% W
+  Vbar <- (nobs(model) - nrow(fixef(model)) / 2) / sum(diag(P))
+  return(Vbar)
+}
+# typical sampling variance
+Vbar <- compute_Vbar(fit_ma1)
+# between-study variance of location part
+sigma2_u = VarCorr(fit_ma1)$study_ID$sd[1,1]^2 
+# average within-study variance - Equation 25
+sigma2bar_e = exp(2 * fixef(fit_ma1)[2,1] + 2 * VarCorr(fit_ma1)$study_ID$sd[2,1]^2)
 
-#  TODO - probably try to get - CV and I2????
+# total I2
+100 * (sigma2_u + sigma2bar_e) / (sigma2_u + sigma2bar_e + Vbar)
+```
 
+For the between-study heterogeneity $I_{B}^2$ (Equation 24), it can be computed with:
 
+```{r}
+100 * sigma2_u / (sigma2_u + sigma2bar_e + Vbar)
+```
+
+For the between-study heterogeneity $I_{W}^2$, it can be computed with:
+
+```{r}
+100 * sigma2bar_e / (sigma2_u + sigma2bar_e + Vbar)
+```
+
+We also propose mean-standardized heterogeneity measure in our paper. They also can be computed from `brms` object.
+
+For between-study heterogeneity ($CV^{(l)}_{H(B)}$) of the location part (Equation 30), it can be computed with:
+
+```{r}
+sqrt(sigma2_u) / abs(fixef(fit_ma1)[1,1])
+```
+
+For between-study heterogeneity ($CV^{(s)}_{H(B)}$) of the scale part (Equation 31), it can be computed with:
+
+```{r}
+sqrt(exp(VarCorr(fit_ma1)$study_ID$sd[2,1]^2) - 1)
 ```
 
 
+### Notes
 
+Three points are worth mentioning.
 
-## Location-scale meta-regression with a categorical moderator (biological)
+- 1. Pros and cons of estimating correlation between the location and scale between-study random effects
+
+Recall in the above example (`brms` object `fit_ma1`), there is a positive correlation ($\rho_u = 0.38$) between the location and scale between-study random effects. On the one hand, $\rho_u$ has its biological interpretation as mean and variance are often found to be positively correlated, which is known as Taylor’s law. On the other hand, estimating $\rho_u$ could bring extra difficulties in model convergence. Therefore, one needs make informed decision about whether the $\rho_u$ should be included in the location-scale model.
+
+- 2. It is important to account for random effects in both location and scale parts
+
+In our paper, we propose one should fit location-scale models with the between-study effects in both parts as starting point. This is because this could allow for the examination of the heterogeneity in variance (heteroscedasticity). Biologically, heteroscedasticity could be associated certain biological phenomena and hypotheses. Methodologically, heteroscedasticity indicate location-scale meta-regression should be preferred over traditional meta-analytic approaches (which only have location part). Currently, only `brms` (`v2.22.0`) can support such location-scale models with the between-study effects in both parts. 
+
+However, including random effects in both location and scale parts also could lead to model convergence issues to small datasets because more parameters are needed to be estimated (see **Example 3**). Especially, when fitting a location-scale meta-regression, including random effects in scale part is likely to cause model convergence issues as meta-regression has more parameters to be estimated compared to meta-analysis (see below). For example, if we include a categorical variable with 5 levels as the moderator of a location-scale meta-regression, there are 10 more regression coefficients that are needed to be estimated, compared to a normal meta-analysis. Therefore, practically, we recommend excluding random effects in scale part when fitting a location-scale meta-regression unless you have a large dataset. Apart from `brms` (`v2.22.0`), `blsmeta` (`0.1.0`) and `metafor` (`v4.7.53`) are also useful to fit such a simplified location-scale meta-regression (where random effects are excluded from the scale part). Therefore, an additional benefit of using simplified location-scale meta-regression is that we can compare results from different software that uses different estimation approaches.
+
+- 3. Accounting for correlated sampling errors is important to location-scale model
+
+Ignoring the correlation between sampling errors within the same study will lead to biased estimate of variance components, which are the response variable of the scale part of the location-scale model.
+
+`brms` (`v2.22.0`) provides an effective way to account for correlated sampling errors. While the current version of `metafor` (`v4.7.53`) allows for correlated sampling errors, it does not allow for between-study effects in scale part. The current version of  `blsmeta` (`0.1.0`) does not allow for correlated sampling errors.
+
+One key step of accounting correlated sampling errors is to construct a variance-covariance matrix. `vcalc()` from `metafor` allows us easily do so. 
+Let's first use `vcalc()` to construct a variance-covariance matrix to capture the correlation between sampling errors within the same cluster (`population_ID`):  
 
 ```{r}
 #| eval: false
+# here correlated structure or cluster is population_ID
+# assume a constant correlation coefficient of 0.5; it can make a best guess for your own dataset
+vcv2 <- vcalc(vi = Var_dARR, 
+             cluster = population_ID, 
+             obs = es_ID, rho = 0.5, 
+             data = dat)
+rownames(vcv2) <- dat$es_ID
+colnames(vcv2) <- dat$es_ID
+```
 
-# biological - meta-regression
+
+### Multilevel location-scale meta-regression with a categorical moderator (biological variable)
+
+In this section, we will illustrate how to fit a multilevel location-scale meta-regression with a categorical moderator. In the context of meta-analysis, we usually have two types of categorical moderator to explain variance in the data: (1) biological variable, and (2) methodological variable. 
+
+The biological moderator we used here is `habitat`, which indicates where animals live. It has two levels: aquatic vs. terrestrial. 
+
+Considering the trade-off of including random effects in the scale part of a location-scale meta-regression, we decide to fit a location-scale meta-regression without random effects in the scale part to **Example 1**. As mentioned earlier, doing so also allows us to compare results from `brms`, `blsmeta`  and `metafor`.
+
+#### `brms`
+
+A multilevel location-scale meta-regression with a biological categorical moderator can be fitted with `brms` syntax:
+
+```{r}
+#| eval: false
+# biological moderator
 form_mr1 <- bf(dARR
             ~ 1  + habitat +
               (1|study_ID) + # this is u_l
@@ -541,8 +853,8 @@ form_mr1 <- bf(dARR
             sigma ~ 1 + habitat
 )
 
-# create a prior
 
+# create priorss
 prior_mr1 <- default_prior(form1, 
                         data = dat, 
                         data2 = list(vcv = vcv),
@@ -566,37 +878,51 @@ fit_mr1 <- brm(form_mr1,
 )
 
 # save this as rds
-
 saveRDS(fit_mr1, here("Rdata", "fit_mr1.rds"))
 ```
+
+Check the results:
 
 ```{r}
 #| warning: false
 #| echo: true
-#| 
 fit_mr1 <- readRDS(here("Rdata", "fit_mr1.rds"))
-
 summary(fit_mr1)
 ```
 
+Looking at `Regression Coefficients`, We can see `terrestrial` has a lower effect than `aquatic` (`-0.16, 95% CI: −0.23 to −0.29`). Meanwhile `terrestrial` is also less variable than `aquatic` (`-1.18, 95% CI: −1.33 to −1.02`). If we use traditional meta-analytic approaches (which assume a fixed variance), we will lose finding.
 
-### Visualzing meta-regression results (biological)
+#### `blsmeta`
+
+A similar meta-regression based on `blsmeta` syntax is:
 
 ```{r}
-# getting plots
-plots_fit_mr1 <- list(
-  visualize_fixed_effects(fit_mr1),
-  visualize_random_effects(fit_mr1)
-)
-
-plots_fit_mr1[[1]] / plots_fit_mr1[[2]]
+#| eval: false
+fit_mr10 <- blsmeta(yi = dARR,
+               vi = Var_dARR,
+               es_id = es_ID,
+               study_id = study_ID,
+               mods = ~ 1 + habitat,
+               mods_scale2 = ~ 1 + habitat,
+               data = dat)
+#save
+saveRDS(fit_mr10, here("Rdata", "fit_mr10.rds"))
 ```
 
-### Visualzing effect sizes with a orchard plot (biological)
+Check the results:
+```{r}
+fit_mr10  <- readRDS(here("Rdata", "fit_mr10.rds"))
+print(fit_mr10)
+```
+
+As you can see, the results from `blsmeta` match well with those from `brms`. There are only slight differences, which are likely due to the different priors used by `blsmeta` and `brms`.
+
+
+#### `metafor`
+
+The current version of `metafor` also can be used to fit the above location-scale meta-regression. It also could account for correlated errors as `brms` did. The syntax based on `metafor` syntax is:
 
 ```{r}
-# using metafor and use heteroscad model
-# see - Nakagawa S, Lagisz M, O'Dea RE, Pottier P, Rutkowska J, Senior AM, Yang Y, Noble DW. orchaRd 2.0: An R package for visualising meta-analyses with orchard plots.
 mr1_mod <- rma.mv(yi = dARR, 
                   V =  vcv,
                   mod = ~ habitat,
@@ -608,17 +934,64 @@ mr1_mod <- rma.mv(yi = dARR,
                   sparse = TRUE,
                   control=list(optimizer="optim", optmethod="Nelder-Mead")
 )
+```
 
+Check the results:
+
+```{r}
+summary(mr1_mod)
+```
+
+Perfect! The results from `metafor` also align with those from `brms` and `blsmeta`. If the comparisons are not clear, let's make a table to show the main parameter estimates:
+
+```{r}
+res1 <- fixef(fit_mr1)
+res2 <- tau2(fit_mr10, newdata_scale2 = data.frame(habitat = c(0,1)), newdata_scale3 = data.frame(1))
+res22 <- fixef(fit_mr10)
+res3 <- summary(mr1_mod)
+
+t <- data.frame(Software = c("brms", "blsmeta", "metafor"),
+           Aquatic_location = c(res1[1,1], res22[1,1], res3$b[1]),
+           Terrestrial_location = c(res1[3,1] + res1[1,1], res22[2,1] + res22[1,1], res3$b[2] + res3$b[1]),
+           Aquatic_scale = c(exp(res1[2,1])^2, res2$level_two[1,1]^2, res3$tau2[1]),
+           Terrestrial_scale = c(exp(res1[4,1] + res1[2,1])^2, res2$level_two[2,1]^2, res3$tau2[2])
+           ) %>% dfround(3)
+```
+
+
+### Visualzing meta-regression with a biological categorical variable
+
+Let's visualize the parameter estimates of `habitat` in both location and scale parts:
+
+```{r}
+#| warning: false
+# getting plots
+plots_fit_mr1 <- list(
+  visualize_fixed_effects(fit_mr1),
+  visualize_random_effects(fit_mr1)
+)
+
+plots_fit_mr1[[1]] / plots_fit_mr1[[2]]
+```
+
+
+`orchard_plot` from `orchaRd` also provides an alternative way to visualize results:
+
+```{r}
 orchard_plot(mr1_mod, mod = "habitat", group = "study_ID", xlab = "Effect size")
 ```
 
 
-## Location-scale meta-regression with a categorical moderator (methodological)
+### Multilevel location-scale meta-regression with a categorical moderator (methodological variable)
 
+Sometimes, ones might be interested in examining a methodological categorical moderator. The principle is exactly the same as that in the biological categorical moderator. Let's use the methodological variable `method` for the illustration. The syntax is fairly simple if you followed the above well: just replace `habitat` with `method` in the above syntax.
+
+#### `brms`
+
+The `brms` syntax for fitting a multilevel location-scale meta-regression with a methodological categorical moderator is:
 
 ```{r}
 #| eval: false
-
 form_mr2 <- bf(dARR
             ~ 1  + method +
               (1|study_ID) + # this is u
@@ -627,8 +1000,7 @@ form_mr2 <- bf(dARR
 )
 
 
-# create prior
-
+# create priorss
 prior_mr2 <- default_prior(form_mr2, 
                         data = dat, 
                         data2 = list(vcv = vcv),
@@ -639,7 +1011,6 @@ prior_mr2 <- default_prior(form_mr2,
 prior_mr2$prior[5] = "constant(1)"
 prior_mr2 
 # fit model
-
 fit_mr2 <- brm(form_mr2, 
             data = dat, 
             data2 = list(vcv = vcv),
@@ -654,39 +1025,49 @@ fit_mr2 <- brm(form_mr2,
 )
 
 # save this as rds
-
-saveRDS(fit_mr2, here("Rdata", "fit1b.rds"))
-
+saveRDS(fit_mr2, here("Rdata", "fit_mr2.rds"))
 ```
+
+Check the results:
 
 ```{r}
 #| warning: false
 #| echo: true
-
 fit_mr2 <- readRDS(here("Rdata", "fit_mr2.rds"))
-
 summary(fit_mr2)
 ```
 
+#### `blsmeta`
 
-### Visualzing meta-regression results (methodological)
+The `blsmeta` syntax for fitting a multilevel location-scale meta-regression with a methodological categorical moderator is:
 
 ```{r}
-# getting plots
-plots_fit_mr2 <- list(
-  visualize_fixed_effects(fit_mr2),
-  visualize_random_effects(fit_mr2)
-)
-
-
-plots_fit_mr2[[1]] / plots_fit_mr2[[2]]
+#| eval: false
+fit_mr12 <- blsmeta(yi = dARR,
+                 vi = Var_dARR,
+                 es_id = es_ID,
+                 study_id = study_ID,
+                 mods = ~ 1 + method,
+                 mods_scale2 = ~ 1 + method,
+                 data = dat)
+#save
+saveRDS(fit_mr12, here("Rdata", "fit_mr12.rds"))
 ```
 
-### Visualzing effect sizes with a orchard plot (methodolgical)
+Check the results:
 
 ```{r}
-# using metafor and use heteroscad model
-# see - Nakagawa S, Lagisz M, O'Dea RE, Pottier P, Rutkowska J, Senior AM, Yang Y, Noble DW. orchaRd 2.0: An R package for visualising meta-analyses with orchard plots.
+#| warning: false
+# read in rds
+fit_mr12 <- readRDS(here("Rdata", "fit_mr12.rds"))
+print(fit_mr12)
+```
+
+#### `metafor`
+
+The current version of `metafor` also can be used to fit the above location-scale meta-regression. It also could account for correlated errors as `brms` did. The syntax based on `metafor` syntax is:
+
+```{r}
 mr2_mod <- rma.mv(yi = dARR, 
                   V =  vcv,
                   mod = ~ method,
@@ -698,24 +1079,72 @@ mr2_mod <- rma.mv(yi = dARR,
                   sparse = TRUE,
                   control=list(optimizer="optim", optmethod="Nelder-Mead")
 )
+```
 
-orchard_plot(mr2_mod, mod = "method", group = "study_ID", xlab = "Effect size")
+Check the results:
+
+```{r}
+summary(mr2_mod)
+```
+
+The results of both location and scale parts from `brms`, `lsmeta`, and `metafor` still align well.
+
+
+### Visualzing meta-regression with a methodological categorical variable
+
+Let's visualize the parameter estimates of `method` in both location and scale parts:
+
+```{r}
+# getting plots
+plots_fit_mr2 <- list(
+  visualize_fixed_effects(fit_mr2),
+  visualize_random_effects(fit_mr2)
+)
+
+plots_fit_mr2[[1]] / plots_fit_mr2[[2]]
 ```
 
 
-## Location-scale phylogenetic meta-regression (biological)
 
-TODO - some descriptions
+### Bonus: Location-scale phylogenetic meta-regression
+
+Ecological and evolutionary meta-analyses often deal with species-level data. The shared evolutionary history among different species could affect both the mean and variance of the traits. In our paper, we propose a phylogenetic location-scale meta-regression (Equations (37) to (43)) to examine whether certain clades or evolutionary lineages exhibit inherently different levels of heterogeneity by species-level moderators (e.g., two different species groups according to their taxonomy). 
+
+While such a phylogenetic location-scale meta-regression looks complex, `brms` is capable enough of implementing it.
+
+Let's start by building a phylogenetic tree: 
 
 ```{r}
 # read in the tree
-tree <- read.tree(here("data", "phylo_tree.tre")) # Read in the tree
+tree <- read.tree(here("data", "phylo_tree.tre")) 
+ggtree(tree, layout="circular",ladderize=TRUE) +
+   geom_tiplab(size=1)
+```
 
+Then, we use `vcv()` to impute the correlation matrix to account for the shared evolutionary history.
+```{r}
 # phylogenetic correlation matrix
-mat <-vcv(tree, cor=T)
+mat <- vcv(tree, cor=T)
+```
 
+To give you an intuition of what a phylogenetic correlation matrix looks like, let's check the first correlations between the first 4 species:
+
+```{r}
+mat[1:4, 1:4]
+corrplot::corrplot(mat[1:4, 1:4])
+corrplot::corrplot(mat[1:4, 1:4], method = "circle", type = "lower")
+```
+
+We can see that they are highly correlated.
+
+#### Location-scale phylogenetic meta-regression based on `brms`
+
+Then, we use specify `1|gr(phylogeny, cov = mat)` to account for phylogenetic correlations:
+
+```{r}
+#| eval: false
 form_mr1p <- bf(dARR
-            ~ 1  + habitat +
+              ~ 1 + habitat +
               (1|gr(phylogeny, cov = mat)) + # this is a
               (1|species_ID) + # this is s
               (1|study_ID) + # this is u
@@ -724,14 +1153,12 @@ form_mr1p <- bf(dARR
 )
 
 
-# create prior
-
+# create priorss
 prior_mr1p <- default_prior(form_mr1p, 
                         data = dat, 
                         data2 = list(vcv = vcv, mat = mat),
                         family = gaussian()
 )
-
 # fixing the varaince to 1 (meta-analysis)
 prior_mr1p$prior[5] = "constant(1)"
 prior_mr1p 
@@ -750,20 +1177,25 @@ fit_mr1p <- brm(form_mr1p,
 
 # save this as rds
 saveRDS(fit_mr1p, here("Rdata", "fit_mr1p.rds"))
-
 ```
 
+Check the results:
 ```{r}
 #| warning: false
 #| echo: true
-
 fit_mr1p<- readRDS(here("Rdata", "fit_mr1p.rds"))
-
 summary(fit_mr1p)
 ```
 
+#### Phylogenetic signal
 
-### Visualzing phylogenetic meta-regression results (biological)
+The phylogenetic signal (or phylogenetic heritability; Equation 40) can be computed as:
+
+```{r}
+(VarCorr(fit_mr1p)$phylogeny$sd[1]^2 / (VarCorr(fit_mr1p)$phylogeny$sd[1]^2 + VarCorr(fit_mr1p)$species_ID$sd[1]^2))
+```
+
+We see that a relatively large phylogenetic signal (0.94). Visualization also confirms that there is a large phylogenetic variance:
 
 ```{r}
 # getting plots
@@ -772,44 +1204,57 @@ plots_fit_mr1p <- list(
   visualize_random_effects(fit_mr1p)
 )
 
-
 plots_fit_mr1p[[1]] / plots_fit_mr1p[[2]]
 ```
 
 
-# Example 2: Continuous Moderator (Elevation Dataset)
+## Example 2: Multilevel location-scale meta-regression with a continuous moderator
 
-Data source (illustrative):
-Midolo, G. et al. (2019). Global patterns of intraspecific leaf trait responses to elevation. Global Change Biology, 25(7), 2485–2498.
+### Data
 
+We use the data (hereafter **Example 2**) from the following paper:
 
-## Loading the data
+> Midolo, G. et al. (2019). Global patterns of intraspecific leaf trait responses to elevation. Global Change Biology, 25(7), 2485–2498.
 
-This dataset (elevation.csv) has an effect size (standarised mean difference: SMD or *d*) and sampling variance Var_dARR. A key moderator is `elevation_log` (i.e., which elevation on the ln scale, organisms live).
+**Example 2** involves using a dataset (`elevation.csv`) to meta-analyse the impact of elevation on intraspecific leaf trait. Let's load `elevation.csv` into `R`, and do some basic pre-processes:
 
 ```{r}
+# load
 dat <- read.csv(here("data", "elevation.csv"))
-dim(dat)
-# filter data Narea
-dat <- dat %>% filter(trait == "Narea")
+# calculate es
+dat <- escalc(measure = "ROM", 
+              m1i = treatment, 
+              m2i = control, 
+              sd1i = sd_treatment, 
+              sd2i = sd_control, 
+              n1i = n_treatment, 
+              n2i = n_control, 
+              data = dat)
 
-dim(dat)
 
+# rename for the consistency
 dat$study_ID <- as.factor(dat$Study_ID)
 dat$es_ID <- as.factor(1:nrow(dat))
 
-# selecting varaibles we need
+# selecte varaibles we need
 dat <- dat %>% select(yi, vi, es_ID, study_ID, elevation_log)
-
-#head(dat)
 str(dat)
 ```
 
-## Creating a variance-covariance matrix for sampling errors
+The key variables:
 
-### Assuming indepedence among effect sizes
+`yi`: effect size estimate, quantifying tje impact of elevation on intraspecific leaf trait
 
-If each effect size has an independent sampling error, we can build a diagonal matrix:
+`vi`: sampling variance corresponding to `yi`
+
+`elevation_log`: elevation (log scale), which will be used as the continuous moderator in a multilevel location-scale meta-regression
+
+
+### Multilevel location-scale meta-analysis
+
+As recommended in our paper, we fit a location-scale meta-analysis including random effects in both location and scale parts. 
+
+First, let's construct a VCV matrix for sampling errors:
 
 ```{r}
 vcv <- diag(dat$vi)
@@ -817,12 +1262,10 @@ rownames(vcv) <- dat$es_ID
 colnames(vcv) <- dat$es_ID
 ```
 
-
-## Multilevel location-scale meta-analysis
+As explained above, only `brms` can fit this model. Therefore, we (1) use `bf()` from `brms` to build models for location and scale part, (2) specify weakly informative (default) priors, and (3) fit the model to get MCMC:
 
 ```{r}
 #| eval: false
-
 form_ma2 <- bf(yi
              ~ 1   +
                (1|p|study_ID) + # this is u
@@ -841,8 +1284,8 @@ prior_ma2 <- default_prior(form_ma2,
 # fixing the varaince to 1 (meta-analysis)
 prior_ma2$prior[5] = "constant(1)"
 prior_ma2 
-# fit model
 
+# fit model
 fit_ma2 <- brm(form_ma2, 
              data = dat, 
              data2 = list(vcv = vcv),
@@ -855,22 +1298,19 @@ fit_ma2 <- brm(form_ma2,
 )
 
 # save this as rds
-
 saveRDS(fit_ma2, here("Rdata", "fit_ma2.rds"))
-
 ```
+
+The results show that there is a non-zero variance (heteroscedasticity), suggesting the location-scale meta-regression is preferred over a regular meta-regression:
 
 ```{r}
 #| warning: false
 #| echo: true
-
 fit_ma2 <- readRDS(here("Rdata", "fit_ma2.rds"))
-
 summary(fit_ma2)
 ```
 
-
-### Visualzing meta-analytic results
+Visualization also confirms the observed heteroscedasticity:
 
 ```{r}
 # getting plots
@@ -880,36 +1320,75 @@ plots_fit_ma2 <- list(
   visualize_correlations(fit_ma2)
 )
 
-
 plots_fit_ma2[[1]] / plots_fit_ma2[[2]] / plots_fit_ma2[[3]]
 ```
 
+We also quantify the heterogeneity on both location and scale parts.
 
-TODO - probably try to get - CV and I2????
+For the total heterogeneity $I_{T}^2$, it can be computed with:
 
-## Location-scale meta-regression with a contnious moderator
+```{r}
+# typical sampling variance
+Vbar <- compute_Vbar(fit_ma2)
+# between-study variance of location part
+sigma2_u = VarCorr(fit_ma2)$study_ID$sd[1,1]^2 
+# average within-study variance - Equation 25
+sigma2bar_e = exp(2 * fixef(fit_ma2)[2,1] + 2 * VarCorr(fit_ma2)$study_ID$sd[2,1]^2)
+
+# total I2
+100 * (sigma2_u + sigma2bar_e) / (sigma2_u + sigma2bar_e + Vbar)
+```
+
+For the between-study heterogeneity $I_{B}^2$ (Equation 24), it can be computed with:
+
+```{r}
+100 * sigma2_u / (sigma2_u + sigma2bar_e + Vbar)
+```
+
+For the between-study heterogeneity $I_{W}^2$, it can be computed with:
+
+```{r}
+100 * sigma2bar_e / (sigma2_u + sigma2bar_e + Vbar)
+```
+
+
+For between-study heterogeneity ($CV^{(l)}_{H(B)}$) of the location part (Equation 30), it can be computed with:
+
+```{r}
+sqrt(sigma2_u) / abs(fixef(fit_ma2)[1,1])
+```
+
+For between-study heterogeneity ($CV^{(s)}_{H(B)}$) of the scale part (Equation 31), it can be computed with:
+
+```{r}
+sqrt(exp(VarCorr(fit_ma2)$study_ID$sd[2,1]^2) - 1)
+```
+
+
+### Multilevel location-scale meta-regression with a continuous moderator
+
+Fortunately, both `brms` and `lsmeta` can fit a multilevel location-scale meta-regression with a continuous moderator. Therefore, we will illustrate both.
+
+#### `brms`
+
+Add `elevation_log` as the moderator to both location and scale parts:
 
 ```{r}
 #| eval: false
-
 # SMD = d 
 form_mr3 <- bf(yi
-            ~ 1  + elevation_log +
+            ~ 1 + elevation_log +
               (1|study_ID) + # this is u
               (1|gr(es_ID, cov = vcv)), # this is m
             sigma ~ 1 + elevation_log
 )
 
-
-# create prior
-
-
+# create priorss
 prior_mr3 <- default_prior(form_mr3, 
                         data = dat, 
                         data2 = list(vcv = vcv),
                         family = gaussian()
 )
-
 # fixing the varaince to 1 (meta-analysis)
 prior_mr3$prior[5] = "constant(1)"
 prior_mr3 
@@ -931,17 +1410,17 @@ saveRDS(fit_mr3, here("Rdata", "fit_mr3.rds"))
 
 ```
 
+Consistent with the original finding, we see that the intraspecific leaf trait of higher elevation will have a higher value (`0.05, 95% CI: 0.01 to 0.08`). Apart this confirmation, we also find the intraspecific leaf trait in higher elevation is more variable than that in lower elevation (`0.29, 95% CI: 0.12 to 0.46`):
+
 ```{r}
 #| warning: false
 #| echo: true
-#| 
 fit_mr3 <- readRDS(here("Rdata", "fit_mr3.rds"))
-
 summary(fit_mr3)
 ```
 
 
-### Visualzing meta-regression results 
+The above results can be visualized with:
 
 ```{r}
 # getting plots
@@ -950,22 +1429,18 @@ plots_fit_mr3 <- list(
   visualize_random_effects(fit_mr3)
 )
 
-
 plots_fit_mr3[[1]] / plots_fit_mr3[[2]]
 ```
 
 
-### Visualzing effect sizes with a bubble plot
+An alternative way to visualize the results:L
 
 ```{r}
-# using metafor and orchaRd
-# see - Nakagawa S, Lagisz M, O'Dea RE, Pottier P, Rutkowska J, Senior AM, Yang Y, Noble DW. orchaRd 2.0: An R package for visualising meta-analyses with orchard plots.
 mr3_mod <- rma.mv(yi = yi, 
                   V =  vcv,
                   mod = ~ elevation_log,
                   random = list(~1 | study_ID,
                                 ~1 | es_ID),
-                  #struct = "DIAG",
                   data = dat, 
                   test = "t",
                   sparse = TRUE,
@@ -973,46 +1448,81 @@ mr3_mod <- rma.mv(yi = yi,
 )
 
 bubble_plot(mr3_mod, mod = "elevation_log", group = "study_ID", g = TRUE, 
-            xlab = "ln(elevation) (moderator)",
+            xlab = "ln(elevation) (continuous moderator)",
             ylab = "SDM (effect size)",
             legend.pos = "bottom.left")
 ```
 
-One can clearly see an increase in variation as `evvelation_log` goes up. 
+#### `blsmeta`
 
-# Example 3: Publication Bias (Small-Study, Decline, Proteus)
+The `blsmeta` is also capable of fitting a multilevel location-scale meta-regression with a continuous moderator. 
 
-Data source (illustrative):
-Neuschulz, E. L. et al. (2016). Pollination and seed dispersal are the most threatened processes of plant regeneration. Scientific Reports, 6, 29839.
+The syntax is as follow:
 
-We illustrate how to incorporate se (or (\sqrt{1/\tilde{n}})) and cyear (centered publication year) in both the location and scale parts:
+```{r}
+#| eval: false
+dat$study_ID <- as.numeric(dat$study_ID)
+fit_mr33 <- blsmeta(yi = yi,
+                    vi = vi,
+                    es_id = es_ID,
+                    study_id = study_ID,
+                    mods = ~ 1 + elevation_log,
+                    mods_scale2 = ~ 1 + elevation_log,
+                    data = dat)
+#save
+saveRDS(fit_mr33, here("Rdata", "fit_mr33.rds"))
+```
 
-# Loading the data
+Except the estimate of the slop of the scale part, other results are very similar: 
 
-This dataset (seed.csv) has an effect size (SND) and sampling variance. Two key moderators are: (1) `se` (standard error for sampling error to model the small-study effect and divergence) and `cyear` (centred publication year to model the decline effect and Proteus effect).
+```{r}
+#| warning: false
+# read in rds
+fit_mr33 <- readRDS(here("Rdata", "fit_mr33.rds"))
+print(fit_mr33)
+```
+
+The differences are expected to be caused by the different priors and MCMC samplers used in `brms` and `lsmeta`. However, if we back-transform the estimate to its original scale (raw variance). The results become very similar.
+
+## Example 3: Publication Bias (Small-Study, Decline, Proteus)
+
+### Data
+
+We use the data (hereafter **Example 3**) from the following paper:
+
+> Neuschulz, E. L. et al. (2016). Pollination and seed dispersal are the most threatened processes of plant regeneration. Scientific Reports, 6, 29839.
+
+This data were originally used to study the effect of forest disturbance on pollination, seed dispersal, seed predation, recruitment and herbivore during plant regeneration. Now, we will it to illustrate the proposed four types of publication bias, including small-study effect, decline effect, small-study divergence, and Proteus effect. While the first two (Equations (35)) are relevant to the location part of the location-scale meta-analysis, the last two (Equation (36)) are relevant to the scale part of the location-scale meta-analysis.
+
+Let's load the data (`seed.csv`) and have basic data cleaning:
 
 ```{r}
 dat <- read.csv(here("data", "seed.csv"))
-
 dat$study_ID <- as.factor(dat$study)
 dat$es_ID <- as.factor(1:nrow(dat))
 dat$se <- sqrt(dat$var.eff.size) # SE (sampling error SD)
 dat$smd <- dat$eff.size # effect isze
 dat$cyear <- scale(dat$study.year, center = TRUE, scale = FALSE) # centred year
-
-
-# selecting varaibles we need
+# select varaibles we need
 dat <- dat %>% select(smd, var.eff.size, es_ID, study_ID, se, cyear)
-
-#head(dat)
 str(dat)
 ```
 
-## Creating a variance-covariance matrix for sampling errors
+The key variables are: 
 
-### Assuming indepedence among effect sizes
+`smd`: effect size estimates, quantifying the sign and magnitude of the effect of forest disturbance 
 
-If each effect size has an independent sampling error, we can build a diagonal matrix:
+`var.eff.size`: sampling variance corresponding to `smd`
+
+`se`: standard error (square root of `var.eff.size`), which will be used as the moderator of the small-study effect and small-study divergence
+
+`cyear`: publication year (centered) of each study, which will be used as the moderator of the decline effect, and Proteus effect
+
+### Multilevel location-scale meta-analysis
+
+Once again, we start by fitting a location-scale meta-analysis that includes random effects for both the location and scale parts It quickly becomes clear that while including random effects in the scale part and estimating the correlation between the location and scale parts can provide biological and methodological insights, there are drawbacks to do so, namely model convergence issues.
+
+Build the matrix for sampling errors:
 
 ```{r}
 vcv <- diag(dat$var.eff.size)
@@ -1020,29 +1530,22 @@ rownames(vcv) <- dat$es_ID
 colnames(vcv) <- dat$es_ID
 ```
 
-
-## Multilevel location-scale meta-analysis with correlation
+Build model structures, set up priors, and fit the specified models:
 
 ```{r}
 #| eval: false
-
-#TODO - may need to rerun this model
-
 form_ma3 <- bf(smd
-            ~ 1   +
+               ~ 1   +
               (1|study_ID) + # this is u_l
               (1|gr(es_ID, cov = vcv)), # this is m
             sigma ~ 1 + (1|study_ID)
 )
-
-
 
 prior_ma3 <- default_prior(form_ma3, 
                         data = dat, 
                         data2 = list(vcv = vcv),
                         family = gaussian()
 )
-
 
 # fixing the varaince to 1 (meta-analysis)
 prior_ma3$prior[3] = "constant(1)"
@@ -1064,40 +1567,48 @@ fit_ma3 <- brm(form_ma3,
 saveRDS(fit_ma3, here("Rdata", "fit_ma3.rds"))
 ```
 
+Let's check the results:
+
 ```{r}
 #| warning: false
 #| echo: true
-
 fit_ma3 <- readRDS(here("Rdata", "fit_ma3.rds"))
-
 summary(fit_ma3)
 ```
 
-The parameters are not mixing well and we have convergence issues which are also clear from the fig below. 
+However, the` Rhat` values are far from 1, signifying model convergence issues. The effective sample sizes of the bulk and tails of the MCMC are extremely small. These are indications that the parameters are not reliably estimated.
 
-### Visualzing meta-analytic results (without correlation)
+Let's do more tests to confirm this. The first test we can do is the posterior predictive test. This test will simulate a random sample from the posterior predictive distribution and then compare the simulated sample (replication) to the observed effect size. If the `fit_ma3` model has converged and captured the data well, we can expect the density of replications to be roughly similar to that of the observed data. This check indicates that the replications deviate from the observed effect size:
 
 ```{r}
-# getting plots
-plots_fit_ma3 <- list(
-  visualize_fixed_effects(fit_ma3),
-  visualize_random_effects(fit_ma3),
-  visualize_correlations(fit_ma3)
-)
-
-
-plots_fit_ma3[[1]] / plots_fit_ma3[[2]] / plots_fit_ma3[[3]]
+pp_check(fit_ma3)
 ```
 
+Next, we can display each chain. The result clearly show that one chain does not converge:
 
-## Multilevel location-scale meta-analysis without the between-study corrleation
+```{r}
+draws <- as_draws_df(fit_ma3)
+draws %>% 
+  mutate(chain = .chain) %>% 
+  bayesplot::mcmc_dens_overlay(pars = vars(b_Intercept)) +
+  theme_minimal()
+```
+
+A high autocorrelation among iterations will lead to the low effective sample sizes because correlated samples do not contribute unique information. We indeed find a high autocorrelation among iterations: 
+
+```{r}
+draws %>% 
+  mutate(chain = .chain) %>% 
+  mcmc_acf(pars = vars(b_Intercept), lags = 35) +
+  theme_minimal()
+```
+
+Once model convergence issues happen, we recommend simplifying the location-scale meta-analysis. Let's remove the parameter $\rho_u$:
 
 ```{r}
 #| eval: false
-
 # no correlation 
 # this runs but the one with correlation does not mix well
-
 form_ma4 <- bf(smd
             ~ 1   +
               (1|study_ID) + # this is u
@@ -1135,53 +1646,69 @@ fit_ma4 <- brm(form_ma4,
 summary(fit_ma4)
 
 # save this as rds
-
 saveRDS(fit4, here("Rdata", "fit_ma4.rds"))
-
 ```
+
+The `Rhat` indicates the model fit is much better than the earlier one, though the effective sample sizes of the scale part are still not high:
 
 ```{r}
 #| warning: false
 #| echo: true
-
 fit_ma4 <- readRDS(here("Rdata", "fit_ma4.rds"))
-
 summary(fit_ma4)
 ```
 
-The parameters are not mixing well and we have convergence issues which are also clear from the fig below. 
-
-### Visualzing meta-analytic results (without correlation)
+The posterior predictive test still does not look good:
 
 ```{r}
-# getting plots
-plots_fit_ma4 <- list(
-  visualize_fixed_effects(fit_ma4),
-  visualize_random_effects(fit_ma4),
-  visualize_correlations(fit_ma4)
-)
+pp_check(fit_ma4)
+```
 
+While each chain indeed convergences, chains 1 and perform slightly differently:
 
-plots_fit_ma4[[1]] / plots_fit_ma4[[2]] 
+```{r}
+draws <- as_draws_df(fit_ma4)
+draws %>% 
+  mutate(chain = .chain) %>% 
+  bayesplot::mcmc_dens_overlay(pars = vars(b_sigma_Intercept)) +
+  theme_minimal()
+```
+
+The scale part still has a high autocorrelation, leading to the low effective sample sizes: 
+
+```{r}
+draws %>% 
+  mutate(chain = .chain) %>% 
+  mcmc_acf(pars = vars(b_sigma_Intercept), lags = 35) +
+  theme_minimal()
 ```
 
 
-TODO - it is mixing well
+Let's further remove another parameter from the scale part, namely the between-study effect:
 
-## Location-scale meta-regression to model publication bias
+TODO - Shinichi, could you please help run this `brms` model (taking out `(1|study_ID)`  from `sigma ~ 1 + (1|study_ID)`). While this will collapse to a normal meta-analysis, it uses a different framework and will be a good illustration why we recommend removing random effects from the scale part when fitting location-scale regression.
+
+
+### Test publication bias based on multilevel location-scale meta-regression
+
+Given the model convergence issues shown above, we decide to test publication bias without including random effects in the scale part (Equations (35) and (36)). Below, we will illustrate it using both `brms` and `lsmeta`. The results from the two packages converge very well.
+
+#### `brms`
+
+Ask Shinichi: `|p|` should be removed and `(1|p|study_ID)` in scale part should also be removed
+
+Testing publication bias is essence fitting a location-scale meta-regression with `se` and `cyear` as the moderators of both the location and scale parts. 
+If you followed the previous instructions well, you'll be well aware that to fit a location-scale meta-regression using `brms`, we need to specify the model structure and prior, and fit the specified model:
 
 ```{r}
 #| eval: false
-
 form_mr4 <- bf(smd
-             ~ 1   + se + cyear +
+             ~ 1  + se + cyear +
                (1|p|study_ID) + # this is u
                (1|gr(es_ID, cov = vcv)), # this is m
              sigma ~ 1 + se + cyear +
                (1|p|study_ID)
 )
-
-
 
 prior_mr4 <- default_prior(form_mr4, 
                          data = dat, 
@@ -1207,26 +1734,21 @@ fit_mr4 <- brm(form_mr4,
              control = list(adapt_delta = 0.99, max_treedepth = 15)
 )
 
-summary(fit_mr4)
-
 # save this as rds
-
 saveRDS(fit_mr4, here("Rdata", "fit_mr4.rds"))
-
 ```
 
+The results indicate that while we do not find the small-study effect and the decline effect, there is evidence for small-study divergence and Proteus effect:
 
 ```{r}
 #| warning: false
 #| echo: true
-
 fit_mr4 <- readRDS(here("Rdata", "fit_mr4.rds"))
-
 summary(fit_mr4)
 ```
 
 
-### Visualzing meta-regression results 
+Visualizations also indicates the above observations:
 
 ```{r}
 # getting plots
@@ -1240,17 +1762,14 @@ plots_fit_mr4[[1]] / plots_fit_mr4[[2]]
 ```
 
 
-### Visualzing effect sizes with a bubble plot
+Ask Shinichi: not sure we will have the following code in this tutorial and whether we should use the following figures in the main text. Because the results from `metafor` which ignores the scale part are distinct from those from `brms` and `lsmeta`.
 
 ```{r}
-# using metafor and orchaRd
-# see - Nakagawa S, Lagisz M, O'Dea RE, Pottier P, Rutkowska J, Senior AM, Yang Y, Noble DW. orchaRd 2.0: An R package for visualising meta-analyses with orchard plots.
 mr4_mod <- rma.mv(yi = smd, 
                   V =  vcv,
                   mod = ~ se + cyear,
                   random = list(~1 | study_ID,
                                 ~1 | es_ID),
-                  #struct = "DIAG",
                   data = dat, 
                   test = "t",
                   sparse = TRUE,
@@ -1269,807 +1788,36 @@ bubble_plot(mr4_mod, mod = "cyear", group = "study_ID", g = TRUE,
 
 ```
 
-One ..... 
 
-# Comparing `brms` results with other packages (`metafor` and `blsmeta`)
+#### `blsmeta`
 
-Here we compare results of three packages. Note the followings:
-
-- `metafor` can only ran the random-effect meta-regression
-- `blsmeta` can run multilevel but only to the 3 levels but it cannot take random effects on the scale part. Instead, `blsmeta` can have regression formulas for each of variance components (apart from the sampling error variance; this is a different model and conceptualization from our proposed model). For the details reading the following two papers
-
-Rodriguez JE, Williams DR, Bürkner PC. Heterogeneous heterogeneity by default: Testing categorical moderators in mixed‐effects meta‐analysis. British Journal of Mathematical and Statistical Psychology. 2023 May;76(2):402-33.
-
-Williams DR, Rodriguez JE, Bürkner PC. Putting variation into variance: modeling between-study heterogeneity in meta-analysis. PsyArXiv 2024 https://osf.io/preprints/psyarxiv/9vkqy
-
-This section have three parts: 1) comparing results of the random-effects meta-analyses (not location-scale models) using `metafor` and `brms` (we show two different ways in `metafor` and three different ways in `brms` to do this), 2) comparing results of ranodm-effects location-scale meta-regression models using `metafor` and `brms` and 3) comparing mulitilevel (3 level) location-scale meta-regression using `blsmeta` and `brms`.
-
-## The random-effects meta-analysis with `metafor` and `brms`
-
-### Loading the data
-
-Here and below, we use the dataset from **Example 1**.
+`blsmeta` can also be used to test the proposed four types of publication bias. Just add `se` and `cyear` as the moderators:
 
 ```{r}
-dat <- read.csv(here("data", "thermal.csv"))
-
-# selecting varaibles we need
-dat <- dat %>% select(dARR, Var_dARR, es_ID, population_ID, study_ID, exp_design, habitat)
+#| eval: false
 dat$study_ID <- as.numeric(dat$study_ID)
-# creating SE (sqrt(Var))
-dat$si <- sqrt(dat$Var_dARR)
-
-# creating a new variable (method) according to the oringal paper
-dat$method <- ifelse(dat$exp_design == c("A", "B", "C"), "initial", "persisitent")
-
-#head(dat)
-str(dat)
-```
-
-### Creating a variance-covariance matrix for sampling errors
-
-```{r}
-# assuming indepdence of each effect size like above
-vcv <- diag(dat$Var_dARR)
-rownames(vcv) <- dat$es_ID
-colnames(vcv) <- dat$es_ID
-```
-
-The following six models should and will produce the same results (apart form MCMD errors)
-
-### Using `metafor` 1
-
-```{r}
-# random effects - default
-fit_ma5 <- rma(yi = dARR, 
-           vi = Var_dARR, 
-           test="t",
-           data = dat)
-
-summary(fit_ma5)
-```
-
-
-### Using `metafor` 2
-
-```{r}
-# random effects - default
-fit_ma6 <- rma.mv(yi = dARR, 
-              V = vcv,
-              random = ~ 1 | es_ID,
-              test="t",
-              data = dat)
-
-summary(fit_ma6)
-```
-
-### Using `brms` 1
-
-```{r}
-#| eval: false
-
-form_ma7 <- bf(dARR | se(si) ~ 1 +  (1|es_ID) # this is e
-)
-
-prior_ma7 <- default_prior(form_ma7, 
-                        data = dat, 
-                        #data2 = list(vcv = vcv),
-                        family = gaussian()
-)
-
-fit_ma7 <- brm(form_ma7, 
-            data = dat, 
-            chains = 2, 
-            cores = 2, 
-            iter = 35000, 
-            warmup = 5000,
-            prior = prior_ma7,
-            control = list(adapt_delta = 0.99, max_treedepth = 20)
-)
-
-
-# save as rds
-saveRDS(fit_ma7, here("Rdata", "fit_ma7.rds"))
-
-```
-
-```{r}
-# load rds
-fit_ma7 <- readRDS(here("Rdata", "fit_ma7.rds"))
-print(summary(fit_ma7), digits = 4)
-```
-
-
-### Using `brms` 2
-
-```{r}
-#| eval: false
-
-# brms 2
-#------------
-form_ma8 <- bf(dARR  ~ 1 +  (1|es_ID) # this is e
-            + fcor(vcv)
-)
-
-prior_ma8 <- default_prior(form_ma8, 
-                        data = dat, 
-                        data2 = list(vcv = vcv),
-                        family = gaussian()
-)
-
-
-# we need to fix the variance to 1 = fcor(vcv)
-prior_ma8$prior[5] = "constant(1)"
-prior_ma8 
-
-fit_ma8 <- brm(form_ma8, 
-           data = dat, 
-           data2 = list(vcv = vcv),
-           chains = 2, 
-           cores = 2, 
-           iter = 15000, 
-           warmup = 5000,
-           prior = prior_ma8,
-           control = list(adapt_delta = 0.99, max_treedepth = 20)
-)
-
-# save as rds
-saveRDS(fit_ma8, here("Rdata", "fit_ma8.rds"))
-```
-
-```{r}
-# load rds
-fit_ma8 <- readRDS(here("Rdata", "fit_ma8.rds"))
-print(summary(fit_ma8), digit = 4)
-```
-
-
-### Using `brms` 3
-
-
-```{r}
-#| eval: false
-
-# brm 3 (using the trick expalined above)
-#------------
-form_ma9 <- bf(dARR  ~ 1 +   
-              (1|gr(es_ID, cov = vcv)), # this is m
-            # residual will be es_ID SD
-)
-
-prior_ma9 <- default_prior(form_ma9, 
-                        data = dat, 
-                        data2 = list(vcv = vcv),
-                        family = gaussian()
-)
-
-# fixing the varaince to 1 (meta-analysis)
-prior_ma9$prior[3] = "constant(1)"
-prior_ma9 
-
-fit_ma9 <- brm(form_ma9, 
-           data = dat, 
-           data2 = list(vcv = vcv),
-           chains = 2, 
-           cores = 2, 
-           iter = 3000, 
-           warmup = 2000,
-           prior = prior_ma9,
-           #control = list(adapt_delta = 0.99, max_treedepth = 20)
-)
-
-saveRDS(fit_ma9, here("Rdata", "ma4.rds"))
-```
-
-Note that this model coverged very quickly esp compared to the first and second models 
-
-```{r}
-# load rds
-fit_ma9 <- readRDS(here("Rdata", "fit_ma9.rds"))
-print(summary(fit_ma9), digit = 4)
-```
-
-
-## The random-effects location-scale meta-regression with `metafor` and `brms`
-
-Note that while `metafor` uses the variance on the sacle part, `brms` uses SD (`sqrt(variance)`) so one needs to double regression coefficients on the sacle part from `brms` to make them comparable. 
-
-### Using `metafor` (habitat)
-
-```{r}
-# metafor
-#------------
-fit_mr5 <- rma(yi = dARR, 
-            vi = Var_dARR, 
-            mods = ~ habitat,
-            scale = ~ habitat,
-            test="t",
-            data = dat)
-
-summary(fit_mr5)
-```
-
-
-### Using `brms` (habitat)
-
-```{r}
-#| eval: false
-form_mr6 <- bf(dARR
-            ~ 1   + habitat + 
-              (1|gr(es_ID, cov = vcv)), # this is m
-            sigma ~ 1 + habitat
-)
-
-
-prior_mr6 <- default_prior(form_mr6, 
-                        data = dat, 
-                        data2 = list(vcv = vcv),
-                        family = gaussian()
-)
-
-
-# fixing the varaince to 1 (meta-analysis)
-prior_mr6$prior[5] = "constant(1)"
-prior_mr6 
-# fit model
-
-fit_mr6 <- brm(form_mr6, 
-            data = dat, 
-            data2 = list(vcv = vcv),
-            chains = 2, 
-            cores = 2, 
-            iter = 35000, 
-            warmup = 5000,
-            prior = prior_mr6,
-            control = list(adapt_delta = 0.95, max_treedepth = 15)
-)
-
-# save as rds
-
-saveRDS(fit_mr6, here("Rdata", "fit_mr6.rds"))
-
-```
-
-
-```{r}
-# load the rds
-
-fit_mr6 <- readRDS(here("Rdata", "fit_mr6.rds"))
-print(summary(fit_mr6), digit = 4)
-```
-
-
-### Using `metafor` (method)
-
-```{r}
-fit_mr7 <- rma(yi = dARR, 
-            vi = Var_dARR, 
-            mods = ~ method,
-            scale = ~ method,
-            test="t",
-            data = dat)
-
-summary(fit_mr7)
-```
-
-
-### Using `brms` (method)
-
-```{r}
-#| eval: false
-
-form_mr8 <- bf(dARR
-            ~ 1   + method + 
-              (1|gr(es_ID, cov = vcv)), # this is m
-            sigma ~ 1 + method
-)
-
-
-prior_mr8<- default_prior(form_mr8, 
-                        data = dat, 
-                        data2 = list(vcv = vcv),
-                        family = gaussian()
-)
-
-
-# fixing the varaince to 1 (meta-analysis)
-prior_mr8$prior[5] = "constant(1)"
-prior_mr8 
-# fit model
-
-fit_mr8 <- brm(form_mr8, 
-            data = dat, 
-            data2 = list(vcv = vcv),
-            chains = 2, 
-            cores = 2, 
-            iter = 35000, 
-            warmup = 5000,
-            prior = prior_mr8,
-            control = list(adapt_delta = 0.95, max_treedepth = 15)
-)
-
-# save as rds
-
-saveRDS(fit_mr8, here("Rdata", "fit_mr8.rds"))
-```
-
-```{r}
-# load the rds
-fit_mr8 <- readRDS(here("Rdata", "fit_mr8.rds"))
-print(summary(fit_mr8), digit = 4)
-```
-
-
-## Mulitlevel (3-level) location-scale meta-regression models with `brms` and `blsmeta`
-
-TODO - something writing here
-
-Both `brms` and `blsmeta` model the ln(SD) on their scale parts so they are directly comparable both on the location and scale parts. 
-
-### Using `brms` (habitat)
-
-```{r}
-#| eval: false
-
-form_mr9 <- bf(dARR
-            ~ 1  + habitat +
-              (1|study_ID) + # this is u
-              (1|gr(es_ID, cov = vcv)), # this is m
-            sigma ~ 1 + habitat
-)
-
-
-# create prior
-
-prior_mr9 <- default_prior(form_mr9, 
-                        data = dat, 
-                        data2 = list(vcv = vcv),
-                        family = gaussian()
-)
-
-# fixing the varaince to 1 (meta-analysis)
-prior_mr9$prior[5] = "constant(1)"
-prior_mr9 
-
-# fit model
-fit_mr9 <- brm(form_mr9, 
-            data = dat, 
-            data2 = list(vcv = vcv),
-            chains = 2, 
-            cores = 2, 
-            iter = 3000, 
-            warmup = 2000,
-            prior = prior_mr9,
-            control = list(adapt_delta = 0.95, max_treedepth = 15)
-)
-
-# save this as rds
-saveRDS(fit_mr9, here("Rdata", "fit_mr91.rds"))
-```
-
-
-```{r}
-# read in rds
-fit_mr9 <- readRDS(here("Rdata", "fit_mr9.rds"))
-print(summary(fit_mr9), digit = 4)
-```
-
-
-### Using `blsmeta` (habitat)
-
-```{r}
-#| eval: false
-
-fit_mr10 <- blsmeta(yi = dARR,
-               vi = Var_dARR,
-               es_id = es_ID,
-               study_id = study_ID,
-               mods = ~ 1 + habitat,
-               mods_scale2 = ~ 1 + habitat,
-               data = dat)
+fit_mr44 <- blsmeta(yi = smd,
+                    vi = var.eff.size,
+                    es_id = es_ID,
+                    study_id = study_ID,
+                    mods = ~ 1 + se + cyear,
+                    mods_scale2 = ~ 1 + se + cyear,
+                    data = dat)
 #save
-saveRDS(fit_mr10, here("Rdata", "fit_mr10.rds"))
-
+saveRDS(fit_mr44, here("Rdata", "fit_mr44.rds"))
 ```
 
+We can see that `blsmeta` leads to similar parameter values as `brms`:
 
 ```{r}
+#| warning: false
 # read in rds
-fit_mr10  <- readRDS(here("Rdata", "fit_mr10.rds"))
-print(fit_mr10, digit = 4)
+fit_mr44 <- readRDS(here("Rdata", "fit_mr44.rds"))
+print(fit_mr44)
 ```
 
 
-### Using `brms` (method)
-
-```{r}
-#| eval: false
-
-form_mr12  <- bf(dARR
-             ~ 1  + method +
-               (1|study_ID) + # this is u
-               (1|gr(es_ID, cov = vcv)), # this is m
-             sigma ~ 1 + method
-)
-
-
-# create prior
-
-prior_mr11 <- default_prior(form_mr11, 
-                         data = dat, 
-                         data2 = list(vcv = vcv),
-                         family = gaussian()
-)
-
-# fixing the varaince to 1 (meta-analysis)
-prior_mr11$prior[5] = "constant(1)"
-prior_mr11 
-# fit model
-
-fit_mr11 <- brm(form_mr11, 
-             data = dat, 
-             data2 = list(vcv = vcv),
-             chains = 2, 
-             cores = 2, 
-             iter = 3000, 
-             warmup = 2000,
-             prior = prior_mr11,
-             control = list(adapt_delta = 0.99, max_treedepth = 15)
-)
-
-summary(fit_mr11)
-
-# save this as rds
-saveRDS(fit_mr11, here("Rdata", "fit_mr11.rds"))
-```
-
-```{r}
-# reading rsd
-fit_mr11 <- readRDS(here("Rdata", "fit_mr11.rds"))
-print(summary(fit_mr11), digit = 4)
-```
-
-
-### Using `blsmeta` (method)
-
-```{r}
-#| eval: false
-
-fit_mr12 <- blsmeta(yi = dARR,
-                 vi = Var_dARR,
-                 es_id = es_ID,
-                 study_id = study_ID,
-                 mods = ~ 1 + method,
-                 mods_scale2 = ~ 1 + method,
-                 data = dat)
-#save
-saveRDS(fit_mr12, here("Rdata", "fit_mr12.rds"))
-```
-
-```{r}
-# read in rds
-fit_mr12 <- readRDS(here("Rdata", "fit_mr12.rds"))
-print(fit_mr12, digit = 4)
-```
-
-
-:::{.column-margin}
-:::{.callout-note}
-xxxxx
-
-```{r}
-
-```
-
-It's important...
-
-:::
-:::
-
-
-:::{.column-margin}
-:::{.callout-important}
-In ...
-:::
-:::
-
-# Figure code
-
-```{r}
-#| eval: false
-#| code-fold: true
-
-# Function to visualize fixed effects (revised for fig)
-visualize_fixed_effects <- function(model, title) {
-  fixed_effect_vars <- get_variables_dynamic(model, "^b_")
-  if (length(fixed_effect_vars) == 0) {
-    message("No fixed effects found")
-    return(NULL)
-  }
-  
-  tryCatch({
-    fixed_effects_samples <- model %>%
-      spread_draws(!!!syms(fixed_effect_vars)) %>%
-      pivot_longer(cols = all_of(fixed_effect_vars), names_to = ".variable", values_to = ".value") %>%
-      mutate(.variable = rename_vars(.variable))
-    
-    ggplot(fixed_effects_samples, aes(x = .value, y = .variable)) +
-      stat_halfeye(
-        normalize = "xy", 
-        point_interval = "mean_qi", 
-        fill = "lightcyan3", 
-        color = "lightcyan4"
-      ) +
-      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
-      labs(title = title, y = "", x = "Posterior values") +
-      theme_classic()
-  }, error = function(e) {
-    message("Error in visualize_fixed_effects: ", e$message)
-    return(NULL)
-  })
-}
-
-
-###########
-# Example 1
-###########
-
-dat <- read.csv(here("data", "thermal.csv"))
-
-# selecting varaibles we need
-dat <- dat %>% select(dARR, Var_dARR, es_ID, population_ID, study_ID, exp_design, habitat)
-
-# creating SE (sqrt(Var))
-dat$si <- sqrt(dat$Var_dARR)
-
-# creating a new variable (method) according to the oringal paper
-dat$method <- ifelse(dat$exp_design == c("A", "B", "C"), "initial", "persisitent")
-
-vcv <- diag(dat$Var_dARR)
-rownames(vcv) <- dat$es_ID
-colnames(vcv) <- dat$es_ID
-
-
-# 4 plots
-
-# plot 1
-
-fit_mr1 <- readRDS(here("Rdata", "fit_mr1.rds"))
-p1 <- visualize_fixed_effects(fit_mr1, title = "a. Categorical biological")
-
-
-
-# plot 2
-
-# using metafor and use heteroscad model
-# see - Nakagawa S, Lagisz M, O'Dea RE, Pottier P, Rutkowska J, Senior AM, Yang Y, Noble DW. orchaRd 2.0: An R package for visualising meta-analyses with orchard plots.
-mr1_mod <- rma.mv(yi = dARR, 
-                  V =  vcv,
-                  mod = ~ habitat,
-                  random = list(~1 | study_ID,
-                                ~habitat | es_ID),
-                  struct = "DIAG",
-                  data = dat, 
-                  test = "t",
-                  sparse = TRUE,
-                  control=list(optimizer="optim", optmethod="Nelder-Mead")
-)
-
-p2 <- orchard_plot(mr1_mod, mod = "habitat", 
-             group = "study_ID", 
-             xlab = "Effect size",
-             trunk.size = 0.5,
-             branch.size = 4,
-             legend.pos = "top.left",
-             cb = FALSE
-             #legend.pos = "none"
-             ) + 
-  scale_colour_manual(values = rep("grey20",2))
-
-p1 + p2
-
-
-# plot 3
-
-fit_mr2 <- readRDS(here("Rdata", "fit_mr2.rds"))
-
-p3 <- visualize_fixed_effects(fit_mr2, title = "b. Categorical methodological")
-
-# plot 4
-
-mr2_mod <- rma.mv(yi = dARR, 
-                  V =  vcv,
-                  mod = ~ method,
-                  random = list(~1 | study_ID,
-                                ~method | es_ID),
-                  struct = "DIAG",
-                  data = dat, 
-                  test = "t",
-                  sparse = TRUE,
-                  control=list(optimizer="optim", optmethod="Nelder-Mead")
-)
-
-p4 <- orchard_plot(mr2_mod, mod = "method", 
-             group = "study_ID", 
-             xlab = "Effect size",
-             trunk.size = 0.5,
-             branch.size = 4,
-             legend.pos = "top.left",
-             cb = FALSE
-             #legend.pos = "none"
-             ) + 
-  scale_colour_manual(values = rep("grey20",2))
-
-p3 + p4
-
-
-############
-# Example 2
-############
-
-dat <- read.csv(here("data", "elevation.csv"))
-dim(dat)
-# filter data LMA
-
-dat <- dat %>% filter(trait == "Narea")
-
-dim(dat)
-
-dat$study_ID <- as.factor(dat$Study_ID)
-dat$es_ID <- as.factor(1:nrow(dat))
-
-# using escalc use ROM
-
-dat <- escalc(measure = "ROM", 
-              m1i = treatment, 
-              m2i = control, 
-              sd1i = sd_treatment, 
-              sd2i = sd_control, 
-              n1i = n_treatment, 
-              n2i = n_control, 
-              data = dat)
-
-
-vcv <- diag(dat$vi)
-rownames(vcv) <- dat$es_ID
-colnames(vcv) <- dat$es_ID
-
-
-# 2 plots
-
-# plot 5
-
-fit_mr3 <- readRDS(here("Rdata", "fit_mr3.rds"))
-
-p5 <- visualize_fixed_effects(fit_mr3, title = "c. Continuous biological")
-
-# plot 6
-
-# using metafor and orchaRd
-# see - Nakagawa S, Lagisz M, O'Dea RE, Pottier P, Rutkowska J, Senior AM, Yang Y, Noble DW. orchaRd 2.0: An R package for visualising meta-analyses with orchard plots.
-mr3_mod <- rma.mv(yi = yi, 
-                  V =  vcv,
-                  mod = ~ elevation_log,
-                  random = list(~1 | study_ID,
-                                ~1 | es_ID),
-                  #struct = "DIAG",
-                  data = dat, 
-                  test = "t",
-                  sparse = TRUE,
-                  control=list(optimizer="optim", optmethod="Nelder-Mead")
-)
-
-bubble_plot(mr3_mod, mod = "elevation_log", group = "study_ID", g = TRUE, 
-            xlab = "ln(elevation) (moderator)",
-            ylab = "SDM (effect size)",
-            legend.pos = "bottom.left")
-
-p6 <- bubble_plot(mr3_mod, mod = "elevation_log", 
-             group = "study_ID", 
-             g = TRUE, 
-             xlab = "ln(elevation) (moderator)",
-             ylab = "lnRR (effect size)",
-             legend.pos = "bottom.left",
-             k.pos = "top.left") + 
-  geom_point(data = dat,
-             aes(x = elevation_log, y = yi,
-                 #fill = "green",
-                 #colour = "green",
-                 size = 1/sqrt(vi)), alpha = 0.3,
-             #shape = 23
-             ) #+
-  # scale_color_discrete() + 
-  # scale_shape_manual(values = 21) +
-  # scale_fill_manual(values = "#117733") +
-  # scale_colour_manual(values = "grey20")
-                                   
-p5 + p6
-
-############
-# Example 3
-############
-
-dat <- read.csv(here("data", "seed.csv"))
-
-dat$study_ID <- as.factor(dat$study)
-dat$es_ID <- as.factor(1:nrow(dat))
-dat$se <- sqrt(dat$var.eff.size) # SE (sampling error SD)
-dat$smd <- dat$eff.size # effect isze
-dat$cyear <- scale(dat$study.year, center = TRUE, scale = FALSE) # centred year
-
-
-# selecting varaibles we need
-dat <- dat %>% select(smd, var.eff.size, es_ID, study_ID, se, cyear)
-
-dat$vi <- dat$var.eff.size
-vcv <- diag(dat$var.eff.size)
-rownames(vcv) <- dat$es_ID
-colnames(vcv) <- dat$es_ID
-# 3 plots 
-
-# plot 7
-
-fit_mr4 <- readRDS(here("Rdata", "fit_mr4.rds"))
-
-p7 <- visualize_fixed_effects(fit_mr4, title = "d.  Publication bias")
-
-
-# plot 8
-
-# using metafor and orchaRd
-
-mr4_mod <- rma.mv(yi = smd, 
-                  V =  vcv,
-                  mod = ~ se + cyear,
-                  random = list(~1 | study_ID,
-                                ~1 | es_ID),
-                  #struct = "DIAG",
-                  data = dat, 
-                  test = "t",
-                  sparse = TRUE,
-                  control=list(optimizer="optim", optmethod="Nelder-Mead")
-)
-
-p8 <- bubble_plot(mr4_mod, mod = "se", group = "study_ID", g = TRUE, 
-            xlab = "Standard error (SE: moderator)",
-            ylab = "SMD (effect size)",
-            legend.pos = "bottom.left",
-            k.pos = "top.right") + 
-  geom_point(data = dat,
-             aes(x = se, y =smd,
-                 size = 1/sqrt(var.eff.size)), alpha = 0.3,
-  ) 
-
-# plot 9
-
-p9 <- bubble_plot(mr4_mod, mod = "cyear", group = "study_ID", g = TRUE, 
-              xlab = "Centered publicaiton year (moderator)",
-              ylab = "SDM (effect size)",
-              legend.pos = "bottom.left",
-              k.pos = "bottom.right") + 
-  geom_point(data = dat,
-             aes(x = cyear, y = smd,
-                 size = 1/sqrt(var.eff.size)), alpha = 0.3,
-  ) 
-
-p7 + (p8 / p9)
-
-### arranging
-
-layout<- "
-AABB
-CCDD
-EEFF
-GGHH
-GGII
-"
-
-p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + plot_layout(design = layout)
-```
-
-![Fig 4](/Users/itchyshin/Dropbox/Github Local/location-scale_meta-analysis/fig/Fig_examples.png)
-
-# insert 
+The slight differences are expected to be caused by the different priors and MCMC samplers used in `brms` and `blsmeta`.
 
 # Software and package versions  
 
@@ -2078,3 +1826,17 @@ p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + plot_layout(design = layout)
 sessionInfo() %>% pander()
 ```
 
+
+# issues in the main text:
+
+1. sigma should be sigma2 (earlier section)
+
+2. sigma2 for the I2 should be sigma2_l (location part)
+
+3. example section: remove significantly, add mention software, and `lsmeta` and `metafor` show similar results
+
+4. variance of the random effects in scale part is not the difference and should not be interpreted as the heterocedasticity (which should be difference in variance)
+
+5. Figure 1 - sampling effort? Figure 4 - the figure indicates there is small-study effect, but the legend says no.
+
+6. subtitle of 2.2 - should it be random-effects location-scale meta-regression

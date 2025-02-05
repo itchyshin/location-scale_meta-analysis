@@ -742,8 +742,8 @@ fit_mr1p <- brm(form_mr1p,
             data2 = list(vcv = vcv, mat = mat),
             chains = 2, 
             cores = 2, 
-            iter = 8000, 
-            warmup = 6000,
+            iter = 10000, 
+            warmup = 5000,
             prior = prior_mr1p,
             control = list(adapt_delta = 0.99, max_treedepth = 15)
 )

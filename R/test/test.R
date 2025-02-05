@@ -399,8 +399,7 @@ summary(fit1b)
 
 dat <- read.csv(here("data", "elevation.csv"))
 dim(dat)
-# filter data LMA
-
+# filter data Narea
 dat <- dat %>% filter(trait == "Narea")
 
 dim(dat)

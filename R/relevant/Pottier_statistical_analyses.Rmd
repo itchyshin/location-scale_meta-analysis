@@ -57,8 +57,8 @@ pacman::p_load(tidyverse,
                ggExtra, 
                MuMIn) 
 
-library("groundhog")
-groundhog.library("emmeans", "2022-04-23") 
+#library("groundhog")
+#groundhog.library("emmeans", "2022-04-23") 
 ```
 
 ## Load data
@@ -844,6 +844,13 @@ d<-mutate(d, search_string=decapitalize(genus_species)) # Decapitalise species n
 d <-left_join(d,select(taxa, search_string, unique_name, ott_id), by="search_string") # Join data sets
 
 d<- d[d$unique_name %in% phylo_branched$tip.label, ] # Check that species names are well matched with the phylogenetic tree
+
+# saving tree
+
+write.tree(phylo_branched, file = here("data", "phylo_tree.tre"))# Save the tree to a file
+
+
+
 ```
 
 

@@ -208,7 +208,9 @@ rename_vars <- function(variable) {
   variable <- gsub("b_sigma_se", "b_s_se", variable) # 
   variable <- gsub("b_cyear", "b_l_cyear", variable) # 
   variable <- gsub("b_sigma_cyear", "b_s_cyear", variable) #
-  variable <- gsub("sd_study_ID__Intercept", "sd_l_study_ID", variable)            
+  variable <- gsub("sd_study_ID__Intercept", "sd_l_study_ID", variable)  
+  variable <- gsub("sd_species_ID__Intercept", "sd_l_species_ID", variable)            
+  variable <- gsub("sd_phylogeny__Intercept", "sd_l_phylogeny", variable)
   variable <- gsub("sd_study_ID__sigma_Intercept", "sd_s_study_ID", variable)
   variable <- gsub("cor_study_ID__Intercept__sigma_Intercept", "cor_study_ID", variable)  
   return(variable)

@@ -545,6 +545,8 @@ The second potential mistake is to set `se(si, sigma = TRUE)` and `sigma ~ 1 + h
 
 Ask Shinichi: actually, I am wondering whether this is really a mistake because I remember that only weighted regression with inverse-sampling-variances as weights will assume a multiplicative heterogeneity.
 
+TODO - incorprate this somewhere to say VCV (diagnoal)= indepedent - we can have this form as well
+
 ```{r}
 #| eval: false
 # this is wrong too - as it multiple sigma^2 to sampling variance 
@@ -1695,8 +1697,6 @@ Given the model convergence issues shown above, we decide to test publication bi
 
 #### `brms`
 
-Ask Shinichi: `|p|` should be removed and `(1|p|study_ID)` in scale part should also be removed
-
 Testing publication bias is essence fitting a location-scale meta-regression with `se` and `cyear` as the moderators of both the location and scale parts. 
 If you followed the previous instructions well, you'll be well aware that to fit a location-scale meta-regression using `brms`, we need to specify the model structure and prior, and fit the specified model:
 
@@ -1704,10 +1704,9 @@ If you followed the previous instructions well, you'll be well aware that to fit
 #| eval: false
 form_mr4 <- bf(smd
              ~ 1  + se + cyear +
-               (1|p|study_ID) + # this is u
+               (1|study_ID) + # this is u
                (1|gr(es_ID, cov = vcv)), # this is m
-             sigma ~ 1 + se + cyear +
-               (1|p|study_ID)
+             sigma ~ 1 + se + cyear
 )
 
 prior_mr4 <- default_prior(form_mr4, 
@@ -1826,17 +1825,3 @@ The slight differences are expected to be caused by the different priors and MCM
 sessionInfo() %>% pander()
 ```
 
-
-# issues in the main text:
-
-1. sigma should be sigma2 (earlier section)
-
-2. sigma2 for the I2 should be sigma2_l (location part)
-
-3. example section: remove significantly, add mention software, and `lsmeta` and `metafor` show similar results
-
-4. variance of the random effects in scale part is not the difference and should not be interpreted as the heterocedasticity (which should be difference in variance)
-
-5. Figure 1 - sampling effort? Figure 4 - the figure indicates there is small-study effect, but the legend says no.
-
-6. subtitle of 2.2 - should it be random-effects location-scale meta-regression

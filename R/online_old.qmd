@@ -1,0 +1,2080 @@
+---
+title: "**Location-scale Meta-analysis and Meta-regression as a Tool to Capture Large-scale Changes in Biological and MethodologicalHeterogeneity: a Spotlight on Heteroscedasticity**"
+author: "**TBA**"
+date: "`r Sys.Date()`"
+format:
+  html:
+    toc: true
+    toc-location: left
+    toc-depth: 3
+    toc-title: "**Table of Contents**"
+    output-file: "index.html"
+    theme: simplex
+    embed-resources: true
+    code-fold: show
+    code-tools: true
+    number-sections: true
+    #bibliography: ./bib/ref.bib
+    fontsize: "12"
+    max-width: "10"
+    code-overflow: wrap
+crossref: 
+  fig-title: Figure     # (default is "Figure")
+  tbl-title: Table     # (default is "Table")
+  title-delim: —     # (default is ":")
+  fig-prefix: Fig.   # (default is "Figure")
+  tbl-prefix: Tab.    # (default is "Table")
+editor_options: 
+  chunk_output_type: console
+---
+```{r setup}
+#| include: false
+
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  message = FALSE,
+  warnings = FALSE,
+  echo = TRUE#,
+  #comment = "#>"
+)
+```
+
+
+# Introduction (Outline)
+
+Here, we illustrates how to fit location-scale meta-analysis and meta-regression models in R, using `brms` (Bayesian approach), demonstrating how to model both mean (location) and variance (scale) components under a meta-analytic framework.
+
+We cover:
+	1.	A dataset with a categorical moderator (e.g., habitat type).
+	2.	A dataset with a continuous moderator (e.g., log-elevation).
+	3.	An example showing how to examine publication biases in both location and scale parts (e.g., small-study divergence, Proteus effect).
+	
+	
+For each example, we start with fitting the following location-scale model (or double-hierarchical model):
+
+$$
+y_i = \beta_0^{(l)} +  u_{j[i]}^{(l)} + e_i^{(l)} + m_i^{(l)},
+$$
+$$
+\ln(\sigma_{e_i}) = \beta_0^{(s)} + u_{j[i]}^{(s)}.
+$$
+$$
+\begin{equation}
+\begin{pmatrix} u_j^{(l)} \\ 
+u_j^{(s)} \end{pmatrix}
+\sim \mathcal{N}\left(
+\begin{pmatrix}0 \\ 0\end{pmatrix},
+\begin{pmatrix}
+\sigma_{u(l)}^{2} & \rho_u \sigma_{u(l)} \sigma_{u(s)} \\
+\rho_u \sigma_{u(l)} \sigma_{u(s)} & \sigma_{u(s)}^{2}
+\end{pmatrix}
+\right).
+\end{equation}
+$$
+
+
+$$
+e_i \sim \mathcal{N}(0,\sigma_e^2), \space \text{and} \space m_i \sim \mathcal{N}(0,\sigma_{m_i}^2).
+$$
+
+TODO - description....
+
+For Example 3, we also use:
+
+$$
+\begin{equation}
+\begin{pmatrix} u_j^{(l)} \\ 
+u_j^{(s)} \end{pmatrix}
+\sim \mathcal{N}\left(
+\begin{pmatrix}0 \\ 0\end{pmatrix},
+\begin{pmatrix}
+\sigma_{u(l)}^{2} & 0 \\
+0 & \sigma_{u(s)}^{2}
+\end{pmatrix}
+\right).
+\end{equation}
+$$
+
+
+Then, we fit the following location-scale meta-regression
+
+$$
+y_i = \beta_0^{(l)} + \beta_1^{(l)} x_{1i} + \cdots + \beta_p^{(l)} x_{pi} + u_{j[i]}^{(l)} + e_i^{(l)} + m_i^{(l)},
+$$
+$$
+\ln(\sigma_{e_i}) = \beta_0^{(s)} + \beta_1^{(s)} x_{1i} + \cdots + \beta_p^{(s)} x_{pi},
+$$
+
+$$
+u_j^{(l)} \sim \mathcal{N}(0,\sigma_{u(l)}^{2}), \space e_i \sim \mathcal{N}(0,\sigma_e^2), \space \text{and} \space m_i \sim \mathcal{N}(0,\sigma_{m_i}^2)
+$$
+TODO - description....
+
+
+For Example 1, we also fit a phylogenetic location-scale meta-regression as follows:
+	
+$$
+y_i = \beta_0 + a_{k[i]} + s_{k[i]} + u_i + e_i + m_i
+$$
+
+$$
+\ln(\sigma_{e_i}) = \beta_0^{(s)} + \beta_1^{(s)} x_{1i} + \cdots + \beta_p^{(s)} x_{pi},
+$$
+$$
+a_k^{(l)} \sim \mathcal{N}(0,\sigma_{a(l)}^{2}\mathbf{A}),
+\space
+\text{and}
+\space
+s_k^{(l)} \sim \mathcal{N}(0,\sigma_{s(l)}^{2}).
+$$
+
+with
+	
+$$
+u_j^{(l)} \sim \mathcal{N}(0,\sigma_{u(l)}^{2}), \space e_i \sim \mathcal{N}(0,\sigma_e^2), \space \text{and} \space m_i \sim \mathcal{N}(0,\sigma_{m_i}^2).
+$$	
+TODO - description....	
+	
+Later, we use `metafor` (a frequentist implementation)  and `blsmeta` (another Bayesian implementation) to check if results from `brms` match those from `metafor` and `blsmeta` when we use the same model.
+
+Please refer to the associated paper for theoretical background, formulas, and details on location-scale models in ecology and evolution.
+
+# Prerequisites
+
+## Loading pacakges
+
+```{r packages}
+
+# Attempt to load or install necessary packages
+if(!require(pacman)) install.packages("pacman")
+pacman::p_load(
+  tidyverse,
+  tidybayes,
+  here,
+  patchwork,
+  orchaRd,  # see the note
+  ggplot2,
+  pander,
+  brms,
+  metafor,
+  blsmeta # see the note
+)
+
+```
+
+
+:::{.column-margin}
+:::{.callout-note}
+
+For two packages, one needs to download from GitHub repositories. 
+
+```{r}
+pacman::p_load(devtools, tidyverse, metafor, patchwork, R.rsp, emmeans)
+
+# install orchaRd
+devtools::install_github("daniel1noble/orchaRd", force = TRUE)
+
+# install blsmeta
+devtools::install_github("donaldRwilliams/blsmeta")
+```
+
+:::
+:::
+
+
+## Adding custum functions
+
+These functions are to visualize `brms` results
+
+```{r}
+#| code-fold: true
+
+# Function to get variable names dynamically
+get_variables_dynamic <- function(model, pattern) {
+  variables <- get_variables(model)
+  variables[grep(pattern, variables)]
+}
+
+rename_vars <- function(variable) {
+  variable <- gsub("b_Intercept", "b_l_intercept", variable)
+  variable <- gsub("b_sigma_Intercept", "b_s_intercept", variable)  
+  variable <- gsub("b_habitatterrestrial", "b_l_contrast", variable)            
+  variable <- gsub("b_sigma_habitatterrestrial", "b_s_contrast", variable)
+  variable <- gsub("b_methodpersisitent", "b_l_contrast", variable)            
+  variable <- gsub("b_sigma_methodpersisitent", "b_s_contrast", variable)
+  variable <- gsub("b_elevation_log", "b_l_elevation", variable)            
+  variable <- gsub("b_sigma_elevation_log", "b_s_elevation", variable)
+  variable <- gsub("b_se", "b_l_se", variable) # 
+  variable <- gsub("b_sigma_se", "b_s_se", variable) # 
+  variable <- gsub("b_cyear", "b_l_cyear", variable) # 
+  variable <- gsub("b_sigma_cyear", "b_s_cyear", variable) #
+  variable <- gsub("sd_study_ID__Intercept", "sd_l_study_ID", variable)  
+  variable <- gsub("sd_species_ID__Intercept", "sd_l_species_ID", variable)            
+  variable <- gsub("sd_phylogeny__Intercept", "sd_l_phylogeny", variable)
+  variable <- gsub("sd_study_ID__sigma_Intercept", "sd_s_study_ID", variable)
+  variable <- gsub("cor_study_ID__Intercept__sigma_Intercept", "cor_study_ID", variable)  
+  return(variable)
+}
+
+
+# Function to visualize fixed effects
+visualize_fixed_effects <- function(model) {
+  fixed_effect_vars <- get_variables_dynamic(model, "^b_")
+  if (length(fixed_effect_vars) == 0) {
+    message("No fixed effects found")
+    return(NULL)
+  }
+  
+  tryCatch({
+    fixed_effects_samples <- model %>%
+      spread_draws(!!!syms(fixed_effect_vars)) %>%
+      pivot_longer(cols = all_of(fixed_effect_vars), names_to = ".variable", values_to = ".value") %>%
+      mutate(.variable = rename_vars(.variable))
+    
+    ggplot(fixed_effects_samples, aes(x = .value, y = .variable)) +
+      stat_halfeye(
+        normalize = "xy", 
+        point_interval = "mean_qi", 
+        fill = "lightcyan3", 
+        color = "lightcyan4"
+      ) +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
+      labs(y = "Fixed effects", x = "Posterior values") +
+      theme_classic()
+  }, error = function(e) {
+    message("Error in visualize_fixed_effects: ", e$message)
+    return(NULL)
+  })
+}
+
+# Function to visualize random effects
+visualize_random_effects <- function(model) {
+  random_effect_vars <- get_variables_dynamic(model, "^sd_")
+  random_effect_vars <- random_effect_vars[random_effect_vars != "sd_es_ID__Intercept"]
+  if (length(random_effect_vars) == 0) {
+    message("No random effects found")
+    return(NULL)
+  }
+  
+  tryCatch({
+    random_effects_samples <- model %>%
+      spread_draws(!!!syms(random_effect_vars)) %>%
+      pivot_longer(cols = all_of(random_effect_vars), names_to = ".variable", values_to = ".value") %>%
+      mutate(.variable = rename_vars(.variable)) #%>%
+      #mutate(.value = .value)  # leave SD as it is
+    
+    ggplot(random_effects_samples, aes(x = .value, y = .variable)) +
+      stat_halfeye(
+        normalize = "xy", 
+        point_interval = "mean_qi", 
+        fill = "olivedrab3", 
+        color = "olivedrab4"
+      ) +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
+      labs(y = "Random effects (SD)", x = "Posterior values") +
+      theme_classic()
+  }, error = function(e) {
+    message("Error in visualize_random_effects: ", e$message)
+    return(NULL)
+  })
+}
+
+# Function to visualize correlations
+visualize_correlations <- function(model) {
+  correlation_vars <- get_variables_dynamic(model, "^cor_")
+  if (length(correlation_vars) == 0) {
+    message("No correlations found")
+    return(NULL)
+  }
+  
+  tryCatch({
+    correlation_samples <- model %>%
+      spread_draws(!!!syms(correlation_vars)) %>%
+      pivot_longer(cols = all_of(correlation_vars), names_to = ".variable", values_to = ".value") %>%
+      mutate(.variable = rename_vars(.variable))
+    
+    ggplot(correlation_samples, aes(x = .value, y = .variable)) +
+      stat_halfeye(
+        normalize = "xy", 
+        fill = "#FF6347", 
+        color = "#8B3626"
+      ) +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
+      labs(y = "Correlations", x = "Posterior values") +
+      theme_classic()
+  }, error = function(e) {
+    message("Error in visualize_correlations: ", e$message)
+    return(NULL)
+  })
+}
+```
+
+
+# Example 1: Categorical Moderator (Thermal Tolerance Dataset)
+
+Data source (illustrative):
+Pottier, P. et al. (2022). Developmental plasticity in thermal tolerance: Ontogenetic variation, persistence, and future directions. Ecology Letters, 25(10), 2245–2268.
+
+## Loading the data
+
+This dataset (thermal.csv) has an effect size `dARR` (the developmental acclimation response ratio: the ratio of the slopes of acclimation) and sampling variance `Var_dARR`. Key moderators are two categorical variables: (1) `habitat` (e.g., aquatic vs. terrestrial: where animals live) and (2) `method` (initial vs. persisitent: experimental design where only temparature increase was applied during initial phases or over the entire experimental period).
+
+```{r}
+dat <- read.csv(here("data", "thermal.csv"))
+
+# selecting varaibles we need
+dat <- dat %>% select(dARR, Var_dARR, es_ID, population_ID, study_ID, exp_design, habitat, phylogeny, species_ID)
+
+# creating SE (sqrt(Var))
+dat$si <- sqrt(dat$Var_dARR)
+
+# mending some species names in phylogeny
+
+dat$phylogeny[dat$phylogeny == "Oncorhynchus_mykiss_(species_in_domain_Eukaryota)"] <- 
+"Oncorhynchus_mykiss_-species_in_domain_Eukaryota"
+# creating a new variable (method) according to the oringal paper
+dat$method <- ifelse(dat$exp_design == c("A", "B", "C"), "initial", "persisitent")
+
+#head(dat)
+str(dat)
+```
+
+## Creating a variance-covariance matrix for sampling errors
+
+### Assuming indepedence among effect sizes
+
+If each effect size has an independent sampling error, we can build a diagonal matrix:
+
+```{r}
+vcv <- diag(dat$Var_dARR)
+rownames(vcv) <- dat$es_ID
+colnames(vcv) <- dat$es_ID
+```
+
+### Modeling non-independence
+
+In reality, non-independence of sampling errors are common (effect sizes are obtained partially or all from the same subjects or individuals)
+
+```{r}
+#| eval: false
+# here correlated structure or cluster is population_ID
+# vcalc is from the metafor pacakge
+# we will not sue this for models but this is for demonstration
+
+vcv2 <- vcalc(vi = Var_dARR, 
+             cluster = population_ID, 
+             obs = es_ID, rho = 0.5, 
+             data = dat)
+rownames(vcv2) <- dat$es_ID
+colnames(vcv2) <- dat$es_ID
+```
+
+## Multilevel location-scale meta-analysis
+
+:::{.column-margin}
+:::{.callout-important}
+
+TODO - write the importance of modeling sampling error as the random effects and also fixing its variance as 1 and why
+
+```{r}
+#| eval: false
+
+form1 <- bf(dARR | se(si) ~ 1 + habitat + 
+              (1|study_ID), # this is u
+            sigma ~ 1 + habitat
+)
+
+prior1 <- default_prior(form1, 
+                        data = dat, 
+                        family = gaussian()
+)
+
+ma1 <- brm(form1, 
+           data = dat, 
+           chains = 2, 
+           cores = 2, 
+           iter = 5000, 
+           warmup = 2000,
+           prior = prior1,
+           control = list(adapt_delta = 0.99, max_treedepth = 20)
+)
+
+# this is wrong too - as it multiple sigma^2 to sampling variance 
+#(in meta-analysis, sampling variance is assumed to be known)
+
+form2 <- bf(dARR | se(si, sigma = TRUE) ~ 1 + habitat +
+               (1|study_ID), # this is u
+            sigma ~ 1 + habitat
+)
+
+prior2 <- default_prior(form2, 
+                        data = dat, 
+                        family = gaussian()
+)
+
+# this will run but this is a different model
+ma2 <- brm(form2, 
+           data = dat, 
+           chains = 2, 
+           cores = 2, 
+           iter = 5000, 
+           warmup = 2000,
+           prior = prior2,
+           control = list(adapt_delta = 0.99, max_treedepth = 20)
+)
+
+# save this as rds
+saveRDS(ma2, here("Rdata", "ma2.rds"))
+```
+
+```{r}
+#| warning: false
+#| echo: true
+
+ma2 <- readRDS(here("Rdata", "ma2.rds"))
+
+#
+summary(ma2)
+```
+
+Yet this is not a probably location-scale meta-regression. Symbolically, this model can be written as
+
+$$
+y_i = \beta_0^{(l)} + \beta_1^{(l)} x_{1i} + u_{j[i]}^{(l)} + e_i^{(l)},
+$$
+$$
+\ln(\sigma_{e_i}) = \beta_0^{(s)} + \beta_1^{(s)} x_{1i},
+$$
+
+$$
+u_j^{(l)} \sim \mathcal{N}(0,\sigma_{u(l)}^{2}) \space \text{and} \space \space e_i \sim \mathcal{N}(0,\sigma_e^2 \sigma_{m_i}^2), 
+$$
+As you see above, the sampling variance is merged with the residual variance (the within-study variance) and this is not a location-scale model, which we define in the main text
+
+:::
+:::
+
+```{r}
+#| eval: false
+
+# p in the random effects in location and scale parts allows correlation to be modeled 
+form_ma1 <- bf(dARR
+            ~ 1   +
+              (1|p|study_ID) + # this is u_l (the between-study effect)
+              (1|gr(es_ID, cov = vcv)), # this is m (sampling error)
+            sigma ~ 1 + 
+              (1|p|study_ID) # residual = the within-study effect goes to the scale
+)
+
+
+# Generate default priors
+prior_ma1 <- default_prior(form_ma1, 
+                          data=dat, 
+                          data2=list(vcv=vcv),
+                          family=gaussian())
+prior_ma1$prior[5] = "constant(1)" # meta-analysis assumes sampling variance is known so fixing this to 1
+prior_ma1
+
+# fitting model
+fit_ma1 <- brm(
+  formula = form_ma1,
+  data = dat,
+  data2 = list(vcv=vcv),
+  chains = 2,
+  cores = 2,
+  iter = 6000,
+  warmup = 3000,
+  prior = prior_ma1,
+  control = list(adapt_delta=0.95, max_treedepth=15)
+)
+
+# save this as rds
+saveRDS(fit_ma1, here("Rdata", "fit_ma1.rds"))
+```
+
+```{r}
+#| warning: false
+#| echo: true
+
+fit_ma1 <- readRDS(here("Rdata", "fit_ma1.rds"))
+
+summary(fit_ma1)
+```
+
+Note that there is non-zero variance (SD) in the between-study effect on the scale part as well as the location part. Also, there is a positive and significant correaltion ($\rho_u = 0.38$) between the location and scale between-study random effects.
+
+### Visualzing meta-analytic results
+
+```{r}
+# getting plots
+plots_fit_ma1 <- list(
+  visualize_fixed_effects(fit_ma1),
+  visualize_random_effects(fit_ma1),
+  visualize_correlations(fit_ma1)
+)
+
+plots_fit_ma1[[1]] / plots_fit_ma1[[2]] / plots_fit_ma1[[3]]
+```
+
+### Quantifying heterogeniety on the location and scale part
+
+```{r}
+
+#  TODO - probably try to get - CV and I2????
+
+
+```
+
+
+
+
+## Location-scale meta-regression with a categorical moderator (biological)
+
+```{r}
+#| eval: false
+
+# biological - meta-regression
+form_mr1 <- bf(dARR
+            ~ 1  + habitat +
+              (1|study_ID) + # this is u_l
+              (1|gr(es_ID, cov = vcv)), # this is m
+            sigma ~ 1 + habitat
+)
+
+# create a prior
+
+prior_mr1 <- default_prior(form1, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+# fixing the variance to 1 (meta-analysis)
+prior_mr1$prior[5] = "constant(1)"
+prior_mr1 
+
+# fitting model
+fit_mr1 <- brm(form_mr1, 
+            data = dat, 
+            data2 = list(vcv = vcv),
+            chains = 2, 
+            cores = 2, 
+            iter = 3000, 
+            warmup = 2000,
+            prior = prior_mr1,
+            control = list(adapt_delta = 0.95, max_treedepth = 15)
+)
+
+# save this as rds
+
+saveRDS(fit_mr1, here("Rdata", "fit_mr1.rds"))
+```
+
+```{r}
+#| warning: false
+#| echo: true
+#| 
+fit_mr1 <- readRDS(here("Rdata", "fit_mr1.rds"))
+
+summary(fit_mr1)
+```
+
+
+### Visualzing meta-regression results (biological)
+
+```{r}
+# getting plots
+plots_fit_mr1 <- list(
+  visualize_fixed_effects(fit_mr1),
+  visualize_random_effects(fit_mr1)
+)
+
+plots_fit_mr1[[1]] / plots_fit_mr1[[2]]
+```
+
+### Visualzing effect sizes with a orchard plot (biological)
+
+```{r}
+# using metafor and use heteroscad model
+# see - Nakagawa S, Lagisz M, O'Dea RE, Pottier P, Rutkowska J, Senior AM, Yang Y, Noble DW. orchaRd 2.0: An R package for visualising meta-analyses with orchard plots.
+mr1_mod <- rma.mv(yi = dARR, 
+                  V =  vcv,
+                  mod = ~ habitat,
+                  random = list(~1 | study_ID,
+                                ~habitat | es_ID),
+                  struct = "DIAG",
+                  data = dat, 
+                  test = "t",
+                  sparse = TRUE,
+                  control=list(optimizer="optim", optmethod="Nelder-Mead")
+)
+
+orchard_plot(mr1_mod, mod = "habitat", group = "study_ID", xlab = "Effect size")
+```
+
+
+## Location-scale meta-regression with a categorical moderator (methodological)
+
+
+```{r}
+#| eval: false
+
+form_mr2 <- bf(dARR
+            ~ 1  + method +
+              (1|study_ID) + # this is u
+              (1|gr(es_ID, cov = vcv)), # this is m
+            sigma ~ 1 + method
+)
+
+
+# create prior
+
+prior_mr2 <- default_prior(form_mr2, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+# fixing the varaince to 1 (meta-analysis)
+prior_mr2$prior[5] = "constant(1)"
+prior_mr2 
+# fit model
+
+fit_mr2 <- brm(form_mr2, 
+            data = dat, 
+            data2 = list(vcv = vcv),
+            chains = 2, 
+            cores = 2, 
+            iter = 3000, 
+            warmup = 2000,
+            #backend = "cmdstanr",
+            prior = prior_mr2,
+            #threads = threading(9),
+            control = list(adapt_delta = 0.99, max_treedepth = 15)
+)
+
+# save this as rds
+
+saveRDS(fit_mr2, here("Rdata", "fit1b.rds"))
+
+```
+
+```{r}
+#| warning: false
+#| echo: true
+
+fit_mr2 <- readRDS(here("Rdata", "fit_mr2.rds"))
+
+summary(fit_mr2)
+```
+
+
+### Visualzing meta-regression results (methodological)
+
+```{r}
+# getting plots
+plots_fit_mr2 <- list(
+  visualize_fixed_effects(fit_mr2),
+  visualize_random_effects(fit_mr2)
+)
+
+
+plots_fit_mr2[[1]] / plots_fit_mr2[[2]]
+```
+
+### Visualzing effect sizes with a orchard plot (methodolgical)
+
+```{r}
+# using metafor and use heteroscad model
+# see - Nakagawa S, Lagisz M, O'Dea RE, Pottier P, Rutkowska J, Senior AM, Yang Y, Noble DW. orchaRd 2.0: An R package for visualising meta-analyses with orchard plots.
+mr2_mod <- rma.mv(yi = dARR, 
+                  V =  vcv,
+                  mod = ~ method,
+                  random = list(~1 | study_ID,
+                                ~method | es_ID),
+                  struct = "DIAG",
+                  data = dat, 
+                  test = "t",
+                  sparse = TRUE,
+                  control=list(optimizer="optim", optmethod="Nelder-Mead")
+)
+
+orchard_plot(mr2_mod, mod = "method", group = "study_ID", xlab = "Effect size")
+```
+
+
+## Location-scale phylogenetic meta-regression (biological)
+
+TODO - some descriptions
+
+```{r}
+# read in the tree
+tree <- read.tree(here("data", "phylo_tree.tre")) # Read in the tree
+
+# phylogenetic correlation matrix
+mat <-vcv(tree, cor=T)
+
+form_mr1p <- bf(dARR
+            ~ 1  + habitat +
+              (1|gr(phylogeny, cov = mat)) + # this is a
+              (1|species_ID) + # this is s
+              (1|study_ID) + # this is u
+              (1|gr(es_ID, cov = vcv)), # this is m
+            sigma ~ 1 + habitat
+)
+
+
+# create prior
+
+prior_mr1p <- default_prior(form_mr1p, 
+                        data = dat, 
+                        data2 = list(vcv = vcv, mat = mat),
+                        family = gaussian()
+)
+
+# fixing the varaince to 1 (meta-analysis)
+prior_mr1p$prior[5] = "constant(1)"
+prior_mr1p 
+# fit model
+
+fit_mr1p <- brm(form_mr1p, 
+            data = dat, 
+            data2 = list(vcv = vcv, mat = mat),
+            chains = 2, 
+            cores = 2, 
+            iter = 10000, 
+            warmup = 5000,
+            prior = prior_mr1p,
+            control = list(adapt_delta = 0.99, max_treedepth = 15)
+)
+
+# save this as rds
+saveRDS(fit_mr1p, here("Rdata", "fit_mr1p.rds"))
+
+```
+
+```{r}
+#| warning: false
+#| echo: true
+
+fit_mr1p<- readRDS(here("Rdata", "fit_mr1p.rds"))
+
+summary(fit_mr1p)
+```
+
+
+### Visualzing phylogenetic meta-regression results (biological)
+
+```{r}
+# getting plots
+plots_fit_mr1p <- list(
+  visualize_fixed_effects(fit_mr1p),
+  visualize_random_effects(fit_mr1p)
+)
+
+
+plots_fit_mr1p[[1]] / plots_fit_mr1p[[2]]
+```
+
+
+# Example 2: Continuous Moderator (Elevation Dataset)
+
+Data source (illustrative):
+Midolo, G. et al. (2019). Global patterns of intraspecific leaf trait responses to elevation. Global Change Biology, 25(7), 2485–2498.
+
+
+## Loading the data
+
+This dataset (elevation.csv) has an effect size (standarised mean difference: SMD or *d*) and sampling variance Var_dARR. A key moderator is `elevation_log` (i.e., which elevation on the ln scale, organisms live).
+
+```{r}
+dat <- read.csv(here("data", "elevation.csv"))
+dim(dat)
+# filter data Narea
+dat <- dat %>% filter(trait == "Narea")
+
+dim(dat)
+
+dat$study_ID <- as.factor(dat$Study_ID)
+dat$es_ID <- as.factor(1:nrow(dat))
+
+# selecting varaibles we need
+dat <- dat %>% select(yi, vi, es_ID, study_ID, elevation_log)
+
+#head(dat)
+str(dat)
+```
+
+## Creating a variance-covariance matrix for sampling errors
+
+### Assuming indepedence among effect sizes
+
+If each effect size has an independent sampling error, we can build a diagonal matrix:
+
+```{r}
+vcv <- diag(dat$vi)
+rownames(vcv) <- dat$es_ID
+colnames(vcv) <- dat$es_ID
+```
+
+
+## Multilevel location-scale meta-analysis
+
+```{r}
+#| eval: false
+
+form_ma2 <- bf(yi
+             ~ 1   +
+               (1|p|study_ID) + # this is u
+               (1|gr(es_ID, cov = vcv)), # this is m
+             sigma ~ 1 + (1|p|study_ID)
+)
+
+
+
+prior_ma2 <- default_prior(form_ma2, 
+                         data = dat, 
+                         data2 = list(vcv = vcv),
+                         family = gaussian()
+)
+
+# fixing the varaince to 1 (meta-analysis)
+prior_ma2$prior[5] = "constant(1)"
+prior_ma2 
+# fit model
+
+fit_ma2 <- brm(form_ma2, 
+             data = dat, 
+             data2 = list(vcv = vcv),
+             chains = 2, 
+             cores = 2, 
+             iter = 6000, 
+             warmup = 3000,
+             prior = prior_ma2,
+             control = list(adapt_delta = 0.95, max_treedepth = 15)
+)
+
+# save this as rds
+
+saveRDS(fit_ma2, here("Rdata", "fit_ma2.rds"))
+
+```
+
+```{r}
+#| warning: false
+#| echo: true
+
+fit_ma2 <- readRDS(here("Rdata", "fit_ma2.rds"))
+
+summary(fit_ma2)
+```
+
+
+### Visualzing meta-analytic results
+
+```{r}
+# getting plots
+plots_fit_ma2 <- list(
+  visualize_fixed_effects(fit_ma2),
+  visualize_random_effects(fit_ma2),
+  visualize_correlations(fit_ma2)
+)
+
+
+plots_fit_ma2[[1]] / plots_fit_ma2[[2]] / plots_fit_ma2[[3]]
+```
+
+
+TODO - probably try to get - CV and I2????
+
+## Location-scale meta-regression with a contnious moderator
+
+```{r}
+#| eval: false
+
+# SMD = d 
+form_mr3 <- bf(yi
+            ~ 1  + elevation_log +
+              (1|study_ID) + # this is u
+              (1|gr(es_ID, cov = vcv)), # this is m
+            sigma ~ 1 + elevation_log
+)
+
+
+# create prior
+
+
+prior_mr3 <- default_prior(form_mr3, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+# fixing the varaince to 1 (meta-analysis)
+prior_mr3$prior[5] = "constant(1)"
+prior_mr3 
+
+# fit model
+fit_mr3 <- brm(form_mr3, 
+            data = dat, 
+            data2 = list(vcv = vcv),
+            chains = 2, 
+            cores = 2, 
+            iter = 6000, 
+            warmup = 3000,
+            prior = prior_mr3,
+            control = list(adapt_delta = 0.95, max_treedepth = 15)
+)
+
+# save this as rds
+saveRDS(fit_mr3, here("Rdata", "fit_mr3.rds"))
+
+```
+
+```{r}
+#| warning: false
+#| echo: true
+#| 
+fit_mr3 <- readRDS(here("Rdata", "fit_mr3.rds"))
+
+summary(fit_mr3)
+```
+
+
+### Visualzing meta-regression results 
+
+```{r}
+# getting plots
+plots_fit_mr3 <- list(
+  visualize_fixed_effects(fit_mr3),
+  visualize_random_effects(fit_mr3)
+)
+
+
+plots_fit_mr3[[1]] / plots_fit_mr3[[2]]
+```
+
+
+### Visualzing effect sizes with a bubble plot
+
+```{r}
+# using metafor and orchaRd
+# see - Nakagawa S, Lagisz M, O'Dea RE, Pottier P, Rutkowska J, Senior AM, Yang Y, Noble DW. orchaRd 2.0: An R package for visualising meta-analyses with orchard plots.
+mr3_mod <- rma.mv(yi = yi, 
+                  V =  vcv,
+                  mod = ~ elevation_log,
+                  random = list(~1 | study_ID,
+                                ~1 | es_ID),
+                  #struct = "DIAG",
+                  data = dat, 
+                  test = "t",
+                  sparse = TRUE,
+                  control=list(optimizer="optim", optmethod="Nelder-Mead")
+)
+
+bubble_plot(mr3_mod, mod = "elevation_log", group = "study_ID", g = TRUE, 
+            xlab = "ln(elevation) (moderator)",
+            ylab = "SDM (effect size)",
+            legend.pos = "bottom.left")
+```
+
+One can clearly see an increase in variation as `evvelation_log` goes up. 
+
+# Example 3: Publication Bias (Small-Study, Decline, Proteus)
+
+Data source (illustrative):
+Neuschulz, E. L. et al. (2016). Pollination and seed dispersal are the most threatened processes of plant regeneration. Scientific Reports, 6, 29839.
+
+We illustrate how to incorporate se (or (\sqrt{1/\tilde{n}})) and cyear (centered publication year) in both the location and scale parts:
+
+# Loading the data
+
+This dataset (seed.csv) has an effect size (SND) and sampling variance. Two key moderators are: (1) `se` (standard error for sampling error to model the small-study effect and divergence) and `cyear` (centred publication year to model the decline effect and Proteus effect).
+
+```{r}
+dat <- read.csv(here("data", "seed.csv"))
+
+dat$study_ID <- as.factor(dat$study)
+dat$es_ID <- as.factor(1:nrow(dat))
+dat$se <- sqrt(dat$var.eff.size) # SE (sampling error SD)
+dat$smd <- dat$eff.size # effect isze
+dat$cyear <- scale(dat$study.year, center = TRUE, scale = FALSE) # centred year
+
+
+# selecting varaibles we need
+dat <- dat %>% select(smd, var.eff.size, es_ID, study_ID, se, cyear)
+
+#head(dat)
+str(dat)
+```
+
+## Creating a variance-covariance matrix for sampling errors
+
+### Assuming indepedence among effect sizes
+
+If each effect size has an independent sampling error, we can build a diagonal matrix:
+
+```{r}
+vcv <- diag(dat$var.eff.size)
+rownames(vcv) <- dat$es_ID
+colnames(vcv) <- dat$es_ID
+```
+
+
+## Multilevel location-scale meta-analysis with correlation
+
+```{r}
+#| eval: false
+
+#TODO - may need to rerun this model
+
+form_ma3 <- bf(smd
+            ~ 1   +
+              (1|study_ID) + # this is u_l
+              (1|gr(es_ID, cov = vcv)), # this is m
+            sigma ~ 1 + (1|study_ID)
+)
+
+
+
+prior_ma3 <- default_prior(form_ma3, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+
+# fixing the varaince to 1 (meta-analysis)
+prior_ma3$prior[3] = "constant(1)"
+prior_ma3
+
+# fit model
+fit_ma3 <- brm(form_ma3, 
+            data = dat, 
+            data2 = list(vcv = vcv),
+            chains = 2, 
+            cores = 2, 
+            iter = 30000, 
+            warmup = 5000,
+            prior = prior_ma3,
+            control = list(adapt_delta = 0.99, max_treedepth = 15)
+)
+
+# save this as rds
+saveRDS(fit_ma3, here("Rdata", "fit_ma3.rds"))
+```
+
+```{r}
+#| warning: false
+#| echo: true
+
+fit_ma3 <- readRDS(here("Rdata", "fit_ma3.rds"))
+
+summary(fit_ma3)
+```
+
+The parameters are not mixing well and we have convergence issues which are also clear from the fig below. 
+
+### Visualzing meta-analytic results (without correlation)
+
+```{r}
+# getting plots
+plots_fit_ma3 <- list(
+  visualize_fixed_effects(fit_ma3),
+  visualize_random_effects(fit_ma3),
+  visualize_correlations(fit_ma3)
+)
+
+
+plots_fit_ma3[[1]] / plots_fit_ma3[[2]] / plots_fit_ma3[[3]]
+```
+
+
+## Multilevel location-scale meta-analysis without the between-study corrleation
+
+```{r}
+#| eval: false
+
+# no correlation 
+# this runs but the one with correlation does not mix well
+
+form_ma4 <- bf(smd
+            ~ 1   +
+              (1|study_ID) + # this is u
+              (1|gr(es_ID, cov = vcv)), # this is m
+            sigma ~ 1 + (1|study_ID)
+)
+
+
+
+prior_ma4 <- default_prior(form_ma4, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+
+# fixing the varaince to 1 (meta-analysis)
+prior_ma4$prior[3] = "constant(1)"
+prior_ma4 
+# fit model
+
+fit_ma4 <- brm(form_ma4, 
+            data = dat, 
+            data2 = list(vcv = vcv),
+            chains = 2, 
+            cores = 2, 
+            iter = 30000, 
+            warmup = 5000,
+            #backend = "cmdstanr",
+            prior = prior_ma4,
+            #threads = threading(9),
+            control = list(adapt_delta = 0.99, max_treedepth = 15)
+)
+
+summary(fit_ma4)
+
+# save this as rds
+
+saveRDS(fit4, here("Rdata", "fit_ma4.rds"))
+
+```
+
+```{r}
+#| warning: false
+#| echo: true
+
+fit_ma4 <- readRDS(here("Rdata", "fit_ma4.rds"))
+
+summary(fit_ma4)
+```
+
+The parameters are not mixing well and we have convergence issues which are also clear from the fig below. 
+
+### Visualzing meta-analytic results (without correlation)
+
+```{r}
+# getting plots
+plots_fit_ma4 <- list(
+  visualize_fixed_effects(fit_ma4),
+  visualize_random_effects(fit_ma4),
+  visualize_correlations(fit_ma4)
+)
+
+
+plots_fit_ma4[[1]] / plots_fit_ma4[[2]] 
+```
+
+
+TODO - it is mixing well
+
+## Location-scale meta-regression to model publication bias
+
+```{r}
+#| eval: false
+
+form_mr4 <- bf(smd
+             ~ 1   + se + cyear +
+               (1|p|study_ID) + # this is u
+               (1|gr(es_ID, cov = vcv)), # this is m
+             sigma ~ 1 + se + cyear +
+               (1|p|study_ID)
+)
+
+
+
+prior_mr4 <- default_prior(form_mr4, 
+                         data = dat, 
+                         data2 = list(vcv = vcv),
+                         family = gaussian()
+)
+
+# fixing the varaince to 1 (meta-analysis)
+prior_mr4$prior[8] = "constant(1)"
+prior_mr4 
+# fit model
+
+fit_mr4 <- brm(form_mr4, 
+             data = dat, 
+             data2 = list(vcv = vcv),
+             chains = 2, 
+             cores = 2, 
+             iter =35000, 
+             warmup = 5000,
+             #backend = "cmdstanr",
+             prior = prior_mr4,
+             #threads = threading(9),
+             control = list(adapt_delta = 0.99, max_treedepth = 15)
+)
+
+summary(fit_mr4)
+
+# save this as rds
+
+saveRDS(fit_mr4, here("Rdata", "fit_mr4.rds"))
+
+```
+
+
+```{r}
+#| warning: false
+#| echo: true
+
+fit_mr4 <- readRDS(here("Rdata", "fit_mr4.rds"))
+
+summary(fit_mr4)
+```
+
+
+### Visualzing meta-regression results 
+
+```{r}
+# getting plots
+plots_fit_mr4 <- list(
+  visualize_fixed_effects(fit_mr4),
+  visualize_random_effects(fit_mr4)
+)
+
+
+plots_fit_mr4[[1]] / plots_fit_mr4[[2]]
+```
+
+
+### Visualzing effect sizes with a bubble plot
+
+```{r}
+# using metafor and orchaRd
+# see - Nakagawa S, Lagisz M, O'Dea RE, Pottier P, Rutkowska J, Senior AM, Yang Y, Noble DW. orchaRd 2.0: An R package for visualising meta-analyses with orchard plots.
+mr4_mod <- rma.mv(yi = smd, 
+                  V =  vcv,
+                  mod = ~ se + cyear,
+                  random = list(~1 | study_ID,
+                                ~1 | es_ID),
+                  #struct = "DIAG",
+                  data = dat, 
+                  test = "t",
+                  sparse = TRUE,
+                  control=list(optimizer="optim", optmethod="Nelder-Mead")
+)
+
+bubble_plot(mr4_mod, mod = "se", group = "study_ID", g = TRUE, 
+            xlab = "Standard error (SE: moderator)",
+            ylab = "SDM (effect size)",
+            legend.pos = "bottom.left")
+
+bubble_plot(mr4_mod, mod = "cyear", group = "study_ID", g = TRUE, 
+            xlab = "centered publicaiton year (moderator)",
+            ylab = "SDM (effect size)",
+            legend.pos = "bottom.left")
+
+```
+
+One ..... 
+
+# Comparing `brms` results with other packages (`metafor` and `blsmeta`)
+
+Here we compare results of three packages. Note the followings:
+
+- `metafor` can only ran the random-effect meta-regression
+- `blsmeta` can run multilevel but only to the 3 levels but it cannot take random effects on the scale part. Instead, `blsmeta` can have regression formulas for each of variance components (apart from the sampling error variance; this is a different model and conceptualization from our proposed model). For the details reading the following two papers
+
+Rodriguez JE, Williams DR, Bürkner PC. Heterogeneous heterogeneity by default: Testing categorical moderators in mixed‐effects meta‐analysis. British Journal of Mathematical and Statistical Psychology. 2023 May;76(2):402-33.
+
+Williams DR, Rodriguez JE, Bürkner PC. Putting variation into variance: modeling between-study heterogeneity in meta-analysis. PsyArXiv 2024 https://osf.io/preprints/psyarxiv/9vkqy
+
+This section have three parts: 1) comparing results of the random-effects meta-analyses (not location-scale models) using `metafor` and `brms` (we show two different ways in `metafor` and three different ways in `brms` to do this), 2) comparing results of ranodm-effects location-scale meta-regression models using `metafor` and `brms` and 3) comparing mulitilevel (3 level) location-scale meta-regression using `blsmeta` and `brms`.
+
+## The random-effects meta-analysis with `metafor` and `brms`
+
+### Loading the data
+
+Here and below, we use the dataset from **Example 1**.
+
+```{r}
+dat <- read.csv(here("data", "thermal.csv"))
+
+# selecting varaibles we need
+dat <- dat %>% select(dARR, Var_dARR, es_ID, population_ID, study_ID, exp_design, habitat)
+dat$study_ID <- as.numeric(dat$study_ID)
+# creating SE (sqrt(Var))
+dat$si <- sqrt(dat$Var_dARR)
+
+# creating a new variable (method) according to the oringal paper
+dat$method <- ifelse(dat$exp_design == c("A", "B", "C"), "initial", "persisitent")
+
+#head(dat)
+str(dat)
+```
+
+### Creating a variance-covariance matrix for sampling errors
+
+```{r}
+# assuming indepdence of each effect size like above
+vcv <- diag(dat$Var_dARR)
+rownames(vcv) <- dat$es_ID
+colnames(vcv) <- dat$es_ID
+```
+
+The following six models should and will produce the same results (apart form MCMD errors)
+
+### Using `metafor` 1
+
+```{r}
+# random effects - default
+fit_ma5 <- rma(yi = dARR, 
+           vi = Var_dARR, 
+           test="t",
+           data = dat)
+
+summary(fit_ma5)
+```
+
+
+### Using `metafor` 2
+
+```{r}
+# random effects - default
+fit_ma6 <- rma.mv(yi = dARR, 
+              V = vcv,
+              random = ~ 1 | es_ID,
+              test="t",
+              data = dat)
+
+summary(fit_ma6)
+```
+
+### Using `brms` 1
+
+```{r}
+#| eval: false
+
+form_ma7 <- bf(dARR | se(si) ~ 1 +  (1|es_ID) # this is e
+)
+
+prior_ma7 <- default_prior(form_ma7, 
+                        data = dat, 
+                        #data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+fit_ma7 <- brm(form_ma7, 
+            data = dat, 
+            chains = 2, 
+            cores = 2, 
+            iter = 35000, 
+            warmup = 5000,
+            prior = prior_ma7,
+            control = list(adapt_delta = 0.99, max_treedepth = 20)
+)
+
+
+# save as rds
+saveRDS(fit_ma7, here("Rdata", "fit_ma7.rds"))
+
+```
+
+```{r}
+# load rds
+fit_ma7 <- readRDS(here("Rdata", "fit_ma7.rds"))
+print(summary(fit_ma7), digits = 4)
+```
+
+
+### Using `brms` 2
+
+```{r}
+#| eval: false
+
+# brms 2
+#------------
+form_ma8 <- bf(dARR  ~ 1 +  (1|es_ID) # this is e
+            + fcor(vcv)
+)
+
+prior_ma8 <- default_prior(form_ma8, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+
+# we need to fix the variance to 1 = fcor(vcv)
+prior_ma8$prior[5] = "constant(1)"
+prior_ma8 
+
+fit_ma8 <- brm(form_ma8, 
+           data = dat, 
+           data2 = list(vcv = vcv),
+           chains = 2, 
+           cores = 2, 
+           iter = 15000, 
+           warmup = 5000,
+           prior = prior_ma8,
+           control = list(adapt_delta = 0.99, max_treedepth = 20)
+)
+
+# save as rds
+saveRDS(fit_ma8, here("Rdata", "fit_ma8.rds"))
+```
+
+```{r}
+# load rds
+fit_ma8 <- readRDS(here("Rdata", "fit_ma8.rds"))
+print(summary(fit_ma8), digit = 4)
+```
+
+
+### Using `brms` 3
+
+
+```{r}
+#| eval: false
+
+# brm 3 (using the trick expalined above)
+#------------
+form_ma9 <- bf(dARR  ~ 1 +   
+              (1|gr(es_ID, cov = vcv)), # this is m
+            # residual will be es_ID SD
+)
+
+prior_ma9 <- default_prior(form_ma9, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+# fixing the varaince to 1 (meta-analysis)
+prior_ma9$prior[3] = "constant(1)"
+prior_ma9 
+
+fit_ma9 <- brm(form_ma9, 
+           data = dat, 
+           data2 = list(vcv = vcv),
+           chains = 2, 
+           cores = 2, 
+           iter = 3000, 
+           warmup = 2000,
+           prior = prior_ma9,
+           #control = list(adapt_delta = 0.99, max_treedepth = 20)
+)
+
+saveRDS(fit_ma9, here("Rdata", "ma4.rds"))
+```
+
+Note that this model coverged very quickly esp compared to the first and second models 
+
+```{r}
+# load rds
+fit_ma9 <- readRDS(here("Rdata", "fit_ma9.rds"))
+print(summary(fit_ma9), digit = 4)
+```
+
+
+## The random-effects location-scale meta-regression with `metafor` and `brms`
+
+Note that while `metafor` uses the variance on the sacle part, `brms` uses SD (`sqrt(variance)`) so one needs to double regression coefficients on the sacle part from `brms` to make them comparable. 
+
+### Using `metafor` (habitat)
+
+```{r}
+# metafor
+#------------
+fit_mr5 <- rma(yi = dARR, 
+            vi = Var_dARR, 
+            mods = ~ habitat,
+            scale = ~ habitat,
+            test="t",
+            data = dat)
+
+summary(fit_mr5)
+```
+
+
+### Using `brms` (habitat)
+
+```{r}
+#| eval: false
+form_mr6 <- bf(dARR
+            ~ 1   + habitat + 
+              (1|gr(es_ID, cov = vcv)), # this is m
+            sigma ~ 1 + habitat
+)
+
+
+prior_mr6 <- default_prior(form_mr6, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+
+# fixing the varaince to 1 (meta-analysis)
+prior_mr6$prior[5] = "constant(1)"
+prior_mr6 
+# fit model
+
+fit_mr6 <- brm(form_mr6, 
+            data = dat, 
+            data2 = list(vcv = vcv),
+            chains = 2, 
+            cores = 2, 
+            iter = 35000, 
+            warmup = 5000,
+            prior = prior_mr6,
+            control = list(adapt_delta = 0.95, max_treedepth = 15)
+)
+
+# save as rds
+
+saveRDS(fit_mr6, here("Rdata", "fit_mr6.rds"))
+
+```
+
+
+```{r}
+# load the rds
+
+fit_mr6 <- readRDS(here("Rdata", "fit_mr6.rds"))
+print(summary(fit_mr6), digit = 4)
+```
+
+
+### Using `metafor` (method)
+
+```{r}
+fit_mr7 <- rma(yi = dARR, 
+            vi = Var_dARR, 
+            mods = ~ method,
+            scale = ~ method,
+            test="t",
+            data = dat)
+
+summary(fit_mr7)
+```
+
+
+### Using `brms` (method)
+
+```{r}
+#| eval: false
+
+form_mr8 <- bf(dARR
+            ~ 1   + method + 
+              (1|gr(es_ID, cov = vcv)), # this is m
+            sigma ~ 1 + method
+)
+
+
+prior_mr8<- default_prior(form_mr8, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+
+# fixing the varaince to 1 (meta-analysis)
+prior_mr8$prior[5] = "constant(1)"
+prior_mr8 
+# fit model
+
+fit_mr8 <- brm(form_mr8, 
+            data = dat, 
+            data2 = list(vcv = vcv),
+            chains = 2, 
+            cores = 2, 
+            iter = 35000, 
+            warmup = 5000,
+            prior = prior_mr8,
+            control = list(adapt_delta = 0.95, max_treedepth = 15)
+)
+
+# save as rds
+
+saveRDS(fit_mr8, here("Rdata", "fit_mr8.rds"))
+```
+
+```{r}
+# load the rds
+fit_mr8 <- readRDS(here("Rdata", "fit_mr8.rds"))
+print(summary(fit_mr8), digit = 4)
+```
+
+
+## Mulitlevel (3-level) location-scale meta-regression models with `brms` and `blsmeta`
+
+TODO - something writing here
+
+Both `brms` and `blsmeta` model the ln(SD) on their scale parts so they are directly comparable both on the location and scale parts. 
+
+### Using `brms` (habitat)
+
+```{r}
+#| eval: false
+
+form_mr9 <- bf(dARR
+            ~ 1  + habitat +
+              (1|study_ID) + # this is u
+              (1|gr(es_ID, cov = vcv)), # this is m
+            sigma ~ 1 + habitat
+)
+
+
+# create prior
+
+prior_mr9 <- default_prior(form_mr9, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+# fixing the varaince to 1 (meta-analysis)
+prior_mr9$prior[5] = "constant(1)"
+prior_mr9 
+
+# fit model
+fit_mr9 <- brm(form_mr9, 
+            data = dat, 
+            data2 = list(vcv = vcv),
+            chains = 2, 
+            cores = 2, 
+            iter = 3000, 
+            warmup = 2000,
+            prior = prior_mr9,
+            control = list(adapt_delta = 0.95, max_treedepth = 15)
+)
+
+# save this as rds
+saveRDS(fit_mr9, here("Rdata", "fit_mr91.rds"))
+```
+
+
+```{r}
+# read in rds
+fit_mr9 <- readRDS(here("Rdata", "fit_mr9.rds"))
+print(summary(fit_mr9), digit = 4)
+```
+
+
+### Using `blsmeta` (habitat)
+
+```{r}
+#| eval: false
+
+fit_mr10 <- blsmeta(yi = dARR,
+               vi = Var_dARR,
+               es_id = es_ID,
+               study_id = study_ID,
+               mods = ~ 1 + habitat,
+               mods_scale2 = ~ 1 + habitat,
+               data = dat)
+#save
+saveRDS(fit_mr10, here("Rdata", "fit_mr10.rds"))
+
+```
+
+
+```{r}
+# read in rds
+fit_mr10  <- readRDS(here("Rdata", "fit_mr10.rds"))
+print(fit_mr10, digit = 4)
+```
+
+
+### Using `brms` (method)
+
+```{r}
+#| eval: false
+
+form_mr12  <- bf(dARR
+             ~ 1  + method +
+               (1|study_ID) + # this is u
+               (1|gr(es_ID, cov = vcv)), # this is m
+             sigma ~ 1 + method
+)
+
+
+# create prior
+
+prior_mr11 <- default_prior(form_mr11, 
+                         data = dat, 
+                         data2 = list(vcv = vcv),
+                         family = gaussian()
+)
+
+# fixing the varaince to 1 (meta-analysis)
+prior_mr11$prior[5] = "constant(1)"
+prior_mr11 
+# fit model
+
+fit_mr11 <- brm(form_mr11, 
+             data = dat, 
+             data2 = list(vcv = vcv),
+             chains = 2, 
+             cores = 2, 
+             iter = 3000, 
+             warmup = 2000,
+             prior = prior_mr11,
+             control = list(adapt_delta = 0.99, max_treedepth = 15)
+)
+
+summary(fit_mr11)
+
+# save this as rds
+saveRDS(fit_mr11, here("Rdata", "fit_mr11.rds"))
+```
+
+```{r}
+# reading rsd
+fit_mr11 <- readRDS(here("Rdata", "fit_mr11.rds"))
+print(summary(fit_mr11), digit = 4)
+```
+
+
+### Using `blsmeta` (method)
+
+```{r}
+#| eval: false
+
+fit_mr12 <- blsmeta(yi = dARR,
+                 vi = Var_dARR,
+                 es_id = es_ID,
+                 study_id = study_ID,
+                 mods = ~ 1 + method,
+                 mods_scale2 = ~ 1 + method,
+                 data = dat)
+#save
+saveRDS(fit_mr12, here("Rdata", "fit_mr12.rds"))
+```
+
+```{r}
+# read in rds
+fit_mr12 <- readRDS(here("Rdata", "fit_mr12.rds"))
+print(fit_mr12, digit = 4)
+```
+
+
+:::{.column-margin}
+:::{.callout-note}
+xxxxx
+
+```{r}
+
+```
+
+It's important...
+
+:::
+:::
+
+
+:::{.column-margin}
+:::{.callout-important}
+In ...
+:::
+:::
+
+# Figure code
+
+```{r}
+#| eval: false
+#| code-fold: true
+
+# Function to visualize fixed effects (revised for fig)
+visualize_fixed_effects <- function(model, title) {
+  fixed_effect_vars <- get_variables_dynamic(model, "^b_")
+  if (length(fixed_effect_vars) == 0) {
+    message("No fixed effects found")
+    return(NULL)
+  }
+  
+  tryCatch({
+    fixed_effects_samples <- model %>%
+      spread_draws(!!!syms(fixed_effect_vars)) %>%
+      pivot_longer(cols = all_of(fixed_effect_vars), names_to = ".variable", values_to = ".value") %>%
+      mutate(.variable = rename_vars(.variable))
+    
+    ggplot(fixed_effects_samples, aes(x = .value, y = .variable)) +
+      stat_halfeye(
+        normalize = "xy", 
+        point_interval = "mean_qi", 
+        fill = "lightcyan3", 
+        color = "lightcyan4"
+      ) +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
+      labs(title = title, y = "", x = "Posterior values") +
+      theme_classic()
+  }, error = function(e) {
+    message("Error in visualize_fixed_effects: ", e$message)
+    return(NULL)
+  })
+}
+
+
+###########
+# Example 1
+###########
+
+dat <- read.csv(here("data", "thermal.csv"))
+
+# selecting varaibles we need
+dat <- dat %>% select(dARR, Var_dARR, es_ID, population_ID, study_ID, exp_design, habitat)
+
+# creating SE (sqrt(Var))
+dat$si <- sqrt(dat$Var_dARR)
+
+# creating a new variable (method) according to the oringal paper
+dat$method <- ifelse(dat$exp_design == c("A", "B", "C"), "initial", "persisitent")
+
+vcv <- diag(dat$Var_dARR)
+rownames(vcv) <- dat$es_ID
+colnames(vcv) <- dat$es_ID
+
+
+# 4 plots
+
+# plot 1
+
+fit_mr1 <- readRDS(here("Rdata", "fit_mr1.rds"))
+p1 <- visualize_fixed_effects(fit_mr1, title = "a. Categorical biological")
+
+
+
+# plot 2
+
+# using metafor and use heteroscad model
+# see - Nakagawa S, Lagisz M, O'Dea RE, Pottier P, Rutkowska J, Senior AM, Yang Y, Noble DW. orchaRd 2.0: An R package for visualising meta-analyses with orchard plots.
+mr1_mod <- rma.mv(yi = dARR, 
+                  V =  vcv,
+                  mod = ~ habitat,
+                  random = list(~1 | study_ID,
+                                ~habitat | es_ID),
+                  struct = "DIAG",
+                  data = dat, 
+                  test = "t",
+                  sparse = TRUE,
+                  control=list(optimizer="optim", optmethod="Nelder-Mead")
+)
+
+p2 <- orchard_plot(mr1_mod, mod = "habitat", 
+             group = "study_ID", 
+             xlab = "Effect size",
+             trunk.size = 0.5,
+             branch.size = 4,
+             legend.pos = "top.left",
+             cb = FALSE
+             #legend.pos = "none"
+             ) + 
+  scale_colour_manual(values = rep("grey20",2))
+
+p1 + p2
+
+
+# plot 3
+
+fit_mr2 <- readRDS(here("Rdata", "fit_mr2.rds"))
+
+p3 <- visualize_fixed_effects(fit_mr2, title = "b. Categorical methodological")
+
+# plot 4
+
+mr2_mod <- rma.mv(yi = dARR, 
+                  V =  vcv,
+                  mod = ~ method,
+                  random = list(~1 | study_ID,
+                                ~method | es_ID),
+                  struct = "DIAG",
+                  data = dat, 
+                  test = "t",
+                  sparse = TRUE,
+                  control=list(optimizer="optim", optmethod="Nelder-Mead")
+)
+
+p4 <- orchard_plot(mr2_mod, mod = "method", 
+             group = "study_ID", 
+             xlab = "Effect size",
+             trunk.size = 0.5,
+             branch.size = 4,
+             legend.pos = "top.left",
+             cb = FALSE
+             #legend.pos = "none"
+             ) + 
+  scale_colour_manual(values = rep("grey20",2))
+
+p3 + p4
+
+
+############
+# Example 2
+############
+
+dat <- read.csv(here("data", "elevation.csv"))
+dim(dat)
+# filter data LMA
+
+dat <- dat %>% filter(trait == "Narea")
+
+dim(dat)
+
+dat$study_ID <- as.factor(dat$Study_ID)
+dat$es_ID <- as.factor(1:nrow(dat))
+
+# using escalc use ROM
+
+dat <- escalc(measure = "ROM", 
+              m1i = treatment, 
+              m2i = control, 
+              sd1i = sd_treatment, 
+              sd2i = sd_control, 
+              n1i = n_treatment, 
+              n2i = n_control, 
+              data = dat)
+
+
+vcv <- diag(dat$vi)
+rownames(vcv) <- dat$es_ID
+colnames(vcv) <- dat$es_ID
+
+
+# 2 plots
+
+# plot 5
+
+fit_mr3 <- readRDS(here("Rdata", "fit_mr3.rds"))
+
+p5 <- visualize_fixed_effects(fit_mr3, title = "c. Continuous biological")
+
+# plot 6
+
+# using metafor and orchaRd
+# see - Nakagawa S, Lagisz M, O'Dea RE, Pottier P, Rutkowska J, Senior AM, Yang Y, Noble DW. orchaRd 2.0: An R package for visualising meta-analyses with orchard plots.
+mr3_mod <- rma.mv(yi = yi, 
+                  V =  vcv,
+                  mod = ~ elevation_log,
+                  random = list(~1 | study_ID,
+                                ~1 | es_ID),
+                  #struct = "DIAG",
+                  data = dat, 
+                  test = "t",
+                  sparse = TRUE,
+                  control=list(optimizer="optim", optmethod="Nelder-Mead")
+)
+
+bubble_plot(mr3_mod, mod = "elevation_log", group = "study_ID", g = TRUE, 
+            xlab = "ln(elevation) (moderator)",
+            ylab = "SDM (effect size)",
+            legend.pos = "bottom.left")
+
+p6 <- bubble_plot(mr3_mod, mod = "elevation_log", 
+             group = "study_ID", 
+             g = TRUE, 
+             xlab = "ln(elevation) (moderator)",
+             ylab = "lnRR (effect size)",
+             legend.pos = "bottom.left",
+             k.pos = "top.left") + 
+  geom_point(data = dat,
+             aes(x = elevation_log, y = yi,
+                 #fill = "green",
+                 #colour = "green",
+                 size = 1/sqrt(vi)), alpha = 0.3,
+             #shape = 23
+             ) #+
+  # scale_color_discrete() + 
+  # scale_shape_manual(values = 21) +
+  # scale_fill_manual(values = "#117733") +
+  # scale_colour_manual(values = "grey20")
+                                   
+p5 + p6
+
+############
+# Example 3
+############
+
+dat <- read.csv(here("data", "seed.csv"))
+
+dat$study_ID <- as.factor(dat$study)
+dat$es_ID <- as.factor(1:nrow(dat))
+dat$se <- sqrt(dat$var.eff.size) # SE (sampling error SD)
+dat$smd <- dat$eff.size # effect isze
+dat$cyear <- scale(dat$study.year, center = TRUE, scale = FALSE) # centred year
+
+
+# selecting varaibles we need
+dat <- dat %>% select(smd, var.eff.size, es_ID, study_ID, se, cyear)
+
+dat$vi <- dat$var.eff.size
+vcv <- diag(dat$var.eff.size)
+rownames(vcv) <- dat$es_ID
+colnames(vcv) <- dat$es_ID
+# 3 plots 
+
+# plot 7
+
+fit_mr4 <- readRDS(here("Rdata", "fit_mr4.rds"))
+
+p7 <- visualize_fixed_effects(fit_mr4, title = "d.  Publication bias")
+
+
+# plot 8
+
+# using metafor and orchaRd
+
+mr4_mod <- rma.mv(yi = smd, 
+                  V =  vcv,
+                  mod = ~ se + cyear,
+                  random = list(~1 | study_ID,
+                                ~1 | es_ID),
+                  #struct = "DIAG",
+                  data = dat, 
+                  test = "t",
+                  sparse = TRUE,
+                  control=list(optimizer="optim", optmethod="Nelder-Mead")
+)
+
+p8 <- bubble_plot(mr4_mod, mod = "se", group = "study_ID", g = TRUE, 
+            xlab = "Standard error (SE: moderator)",
+            ylab = "SMD (effect size)",
+            legend.pos = "bottom.left",
+            k.pos = "top.right") + 
+  geom_point(data = dat,
+             aes(x = se, y =smd,
+                 size = 1/sqrt(var.eff.size)), alpha = 0.3,
+  ) 
+
+# plot 9
+
+p9 <- bubble_plot(mr4_mod, mod = "cyear", group = "study_ID", g = TRUE, 
+              xlab = "Centered publicaiton year (moderator)",
+              ylab = "SDM (effect size)",
+              legend.pos = "bottom.left",
+              k.pos = "bottom.right") + 
+  geom_point(data = dat,
+             aes(x = cyear, y = smd,
+                 size = 1/sqrt(var.eff.size)), alpha = 0.3,
+  ) 
+
+p7 + (p8 / p9)
+
+### arranging
+
+layout<- "
+AABB
+CCDD
+EEFF
+GGHH
+GGII
+"
+
+p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + plot_layout(design = layout)
+```
+
+![Fig 4](/Users/itchyshin/Dropbox/Github Local/location-scale_meta-analysis/fig/Fig_examples.png)
+
+# insert 
+
+# Software and package versions  
+
+```{r}
+#| code-fold: true
+sessionInfo() %>% pander()
+```
+

@@ -1762,7 +1762,7 @@ plots_fit_mr4[[1]] / plots_fit_mr4[[2]]
 ```
 
 
-Ask Shinichi: not sure we will have the following code in this tutorial and whether we should use the following figures in the main text. Because the results from `metafor` which ignores the scale part are distinct from those from `brms` and `lsmeta`.
+Ask Shinichi: not sure we will have the following code in this tutorial and whether we should use the following figures in the main text. Because the results from `metafor` which ignores the scale part are distinct from those from `brms` and `blsmeta`.
 
 ```{r}
 mr4_mod <- rma.mv(yi = smd, 

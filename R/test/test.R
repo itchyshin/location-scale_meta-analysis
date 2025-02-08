@@ -323,6 +323,17 @@ fit1b <- readRDS(here("Rdata", "fit1b.rds"))
 
 summary(fit1b)
 
+# blsmeta
+
+fit_mr7 <- blsmeta(yi = dARR, 
+                   vi = Var_dARR, 
+                   es_id = es_ID,
+                   mods = ~ habitat,
+                   mods_scale2 = ~ habitat,
+                   data = dat)
+saveRDS(fit_mr7, here("Rdata", "fit_mr7.rds"))
+
+
 # 
 # #############################
 # # genetic data set (categorical - method)
@@ -607,6 +618,18 @@ bubble_plot(mr3_mod, mod = "elevation_log", group = "study_ID", g = TRUE,
             k.pos = "top.left",
             legend.pos = "bottom.left")
 
+###
+
+dat$study_ID <- as.numeric(dat$study_ID)
+fit_mr33 <- blsmeta(yi = yi,
+                    vi = vi,
+                    es_id = es_ID,
+                    study_id = study_ID,
+                    mods = ~ 1 + elevation_log,
+                    mods_scale2 = ~ 1 + elevation_log,
+                    data = dat)
+#save
+saveRDS(fit_mr33, here("Rdata", "fit_mr33.rds"))
 
 # ##################
 # # grazing
@@ -908,6 +931,20 @@ saveRDS(fit5, here("Rdata", "fit5.rds"))
 fit5 <- readRDS(here("Rdata", "fit5.rds"))
 
 summary(fit5)
+
+##
+
+dat$study_ID <- as.numeric(dat$study_ID)
+fit_mr44 <- blsmeta(yi = smd,
+                    vi = var.eff.size,
+                    es_id = es_ID,
+                    study_id = study_ID,
+                    mods = ~ 1 + se + cyear,
+                    mods_scale2 = ~ 1 + se + cyear,
+                    data = dat)
+#save
+saveRDS(fit_mr44, here("Rdata", "fit_mr44.rds"))
+
 
 # #-----------
 # # case_441

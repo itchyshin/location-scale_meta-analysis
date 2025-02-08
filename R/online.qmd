@@ -1,6 +1,6 @@
 ---
 title: "**Location-scale Meta-analysis and Meta-regression as a Tool to Capture Large-scale Changes in Biological and Methodological Heterogeneity: a Spotlight on Heteroscedasticity**"
-author: "****"
+author: "**Shinichi Nakagawa, Ayumi Mizuno, Kyle Morrision, Lorenzo Ricolfi, Coralie Williams, Szymon M Drobniak, Malgorzata Lagisz, and Yefeng Yang**"
 date: "`r Sys.Date()`"
 format:
   html:
@@ -54,10 +54,7 @@ If you have any questions, errors or bug reports, please contact Dr. Yefeng Yang
 
 # Introduction
 
-This online material is a supplement to the paper about multilevel location-scale meta-analysis and meta-regression.
-The main aim of this online material is to provide a comprehensive hands-on guide for the implementation of location-scale meta-analysis and meta-regression.
-While we try to make this online material as stand-along as possible (see below), we do not have too much explanation of the theories underpinning the location-scale meta-analysis and meta-regression.
-Therefore, we recommend readers to read the associated paper for theoretical background, formulas, and details on location-scale models in ecology and evolution.
+This online material is a supplement to the paper about multilevel location-scale meta-analysis and meta-regression. The main aim of this online material is to provide a comprehensive hands-on guide for the implementation of location-scale meta-analysis and meta-regression. While we try to make this online material as stand-along as possible (see below), we do not have too much explanation of the theories underpinning the location-scale meta-analysis and meta-regression. Therefore, we recommend readers to read the associated paper for theoretical background, formulas, and details on location-scale models in ecology and evolution.
 
 # Content
 
@@ -106,7 +103,8 @@ pacman::p_load(
   metafor,
   blsmeta, # devtools::install_github("donaldRwilliams/blsmeta")
   ape,
-  ggtree
+  ggtree,
+  bayesplot
 )
 
 ```
@@ -121,6 +119,7 @@ If you want to use these custom functions in your own data, you'll need to chang
 
 ```{r}
 #| code-fold: true
+
 # Function to get variable names dynamically
 get_variables_dynamic <- function(model, pattern) {
   variables <- get_variables(model)
@@ -128,19 +127,26 @@ get_variables_dynamic <- function(model, pattern) {
 }
 
 rename_vars <- function(variable) {
-  variable <- gsub("b_Intercept", "b_l_int", variable)
-  variable <- gsub("b_sigma_Intercept", "b_s_int", variable)  
+  variable <- gsub("b_Intercept", "b_l_intercept", variable)
+  variable <- gsub("b_sigma_Intercept", "b_s_intercept", variable)  
   variable <- gsub("b_habitatterrestrial", "b_l_contrast", variable)            
   variable <- gsub("b_sigma_habitatterrestrial", "b_s_contrast", variable)
   variable <- gsub("b_methodpersisitent", "b_l_contrast", variable)            
   variable <- gsub("b_sigma_methodpersisitent", "b_s_contrast", variable)
-  variable <- gsub("b_elevation_log", "b_l_slope", variable)            
-  variable <- gsub("b_sigma_elevation_log", "b_s_slope", variable)
-  variable <- gsub("sd_study_ID__Intercept", "sd_l_study_ID", variable)            
+  variable <- gsub("b_elevation_log", "b_l_elevation", variable)            
+  variable <- gsub("b_sigma_elevation_log", "b_s_elevation", variable)
+  variable <- gsub("b_se", "b_l_se", variable) # 
+  variable <- gsub("b_sigma_se", "b_s_se", variable) # 
+  variable <- gsub("b_cyear", "b_l_cyear", variable) # 
+  variable <- gsub("b_sigma_cyear", "b_s_cyear", variable) #
+  variable <- gsub("sd_study_ID__Intercept", "sd_l_study_ID", variable)  
+  variable <- gsub("sd_species_ID__Intercept", "sd_l_species_ID", variable)            
+  variable <- gsub("sd_phylogeny__Intercept", "sd_l_phylogeny", variable)
   variable <- gsub("sd_study_ID__sigma_Intercept", "sd_s_study_ID", variable)
   variable <- gsub("cor_study_ID__Intercept__sigma_Intercept", "cor_study_ID", variable)  
   return(variable)
 }
+
 
 # Function to visualize fixed effects
 visualize_fixed_effects <- function(model) {
@@ -159,12 +165,11 @@ visualize_fixed_effects <- function(model) {
     ggplot(fixed_effects_samples, aes(x = .value, y = .variable)) +
       stat_halfeye(
         normalize = "xy", 
-        point_interval = "mean_qi",
-        .width = .95, 
+        point_interval = "mean_qi", 
         fill = "lightcyan3", 
         color = "lightcyan4"
       ) +
-      geom_vline(xintercept = 0, linetype = "dashed", color = "grey33") +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
       labs(y = "Fixed effects", x = "Posterior values") +
       theme_classic()
   }, error = function(e) {
@@ -193,11 +198,10 @@ visualize_random_effects <- function(model) {
       stat_halfeye(
         normalize = "xy", 
         point_interval = "mean_qi", 
-        .width = .95, 
         fill = "olivedrab3", 
         color = "olivedrab4"
       ) +
-      geom_vline(xintercept = 0, linetype = "dashed", color = "grey33") +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
       labs(y = "Random effects (SD)", x = "Posterior values") +
       theme_classic()
   }, error = function(e) {
@@ -222,12 +226,11 @@ visualize_correlations <- function(model) {
     
     ggplot(correlation_samples, aes(x = .value, y = .variable)) +
       stat_halfeye(
-        normalize = "xy",
-        .width = .95,
+        normalize = "xy", 
         fill = "#FF6347", 
         color = "#8B3626"
       ) +
-      geom_vline(xintercept = 0, linetype = "dashed", color = "grey33") +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
       labs(y = "Correlations", x = "Posterior values") +
       theme_classic()
   }, error = function(e) {
@@ -339,8 +342,8 @@ fit_ma7 <- brm(form_ma7,
 saveRDS(fit_ma7, here("Rdata", "fit_ma7.rds"))
 ```
 
-Given that it takes some time to run the `brms` model, you can download our pre-fitted `brms` model objects from: https://www.dropbox.com/scl/fo/tq2ogshquc5pa6zn6pr58/APG2gtCb6tSKgEnW3KgGJYY?r
-lkey=xrq6io33vu38txmtu71hpq4un&e=1&dl=0.
+Given that it takes some time to run the `brms` model, you can download our pre-fitted `brms` model objects from [link] (https://www.dropbox.com/scl/fo/tq2ogshquc5pa6zn6pr58/APG2gtCb6tSKgEnW3KgGJYY?r
+lkey=xrq6io33vu38txmtu71hpq4un&e=1&dl=0).
 
 Let's load the pre-fitted `brms` model and check the results:
 
@@ -427,7 +430,7 @@ fit_ma9 <- brm(form_ma9,
            warmup = 2000,
            prior = prior_ma9)
 
-saveRDS(fit_ma9, here("Rdata", "ma9.rds"))
+saveRDS(fit_ma9, here("Rdata", "fit_ma9.rds"))
 ```
 
 Note that this model covered more quickly compared to the first and second `brms` models:
@@ -454,7 +457,7 @@ saveRDS(fit_ma10, here("Rdata", "ma10.rds"))
 Check the results:
 
 ```{r}
-fit_ma10 <- readRDS(here("Rdata", "fit_ma10.rds"))
+fit_ma10 <- readRDS(here("Rdata", "ma10.rds"))
 print(fit_ma10)
 ```
 
@@ -533,46 +536,13 @@ fit_mr6 <- readRDS(here("Rdata", "fit_mr6.rds"))
 summary(fit_mr6)
 ```
 
-There two potential mistakes when using `brms` to fit a location-scale meta-regression.
-
-Using the data from **Example 1** as the example, the first mistake is to set `se(si)` and `sigma ~ 1 + habitat` at the same time (where `si` is the standard error of the observations and `habitat` is the moderator of the scale parameter `sigma`).
-This is because setting `se(si)` means the scale parameter `sigma` is replaced by `si` and `brms` will not estimate the scale part of the location-scale meta-regression.
-
-It is easy to check it.
-Setting priors for such model structures will trigger the following error message `"Error: Cannot predict or fix 'sigma' in this model."`
-
-```{r}
-#| eval: false
-form1 <- bf(dARR | se(si) ~ 1 + habitat + (1|study_ID), # this is u
-            sigma ~ 1 + habitat)
-
-prior1 <- default_prior(form1, 
-                        data = dat, 
-                        family = gaussian())
-ma1 <- brm(form1, 
-           data = dat, 
-           chains = 2, 
-           cores = 2, 
-           iter = 5000, 
-           warmup = 2000,
-           prior = prior1,
-           control = list(adapt_delta = 0.99, max_treedepth = 20)
-)
-```
-
-The second potential mistake is to set `se(si, sigma = TRUE)` and `sigma ~ 1 + habitat`.
-This is because such a specification would assume that the sampling variance is not perfectly known, but only up to a constant of proportionality (the so-called residual variance).
-
-Ask Shinichi: actually, I am wondering whether this is really a mistake because I remember that only weighted regression with inverse-sampling-variances as weights will assume a multiplicative heterogeneity.
-
-TODO - incorprate this somewhere to say VCV (diagnoal)= indepedent - we can have this form as well
+An alternative way is the following way but we will not use this implementation for two reasons: 1) it cannot incoprate the variance-covariance matrix of sampling errors and 2) the first specification above is quiker to converge. 
 
 ```{r}
 #| eval: false
 # this is wrong too - as it multiple sigma^2 to sampling variance 
-# (in meta-analysis, sampling variance is assumed to be known)
-form2 <- bf(dARR | se(si, sigma = TRUE) ~ 1 + habitat + 
-              (1|study_ID), # this is u
+
+form2 <- bf(dARR | se(si, sigma = TRUE) ~ 1 + habitat,
             sigma ~ 1 + habitat)
 
 prior2 <- default_prior(form2, 
@@ -595,11 +565,41 @@ ma2 <- brm(form2,
 saveRDS(ma2, here("Rdata", "ma2.rds"))
 ```
 
+Check the results:
+
 ```{r}
 #| warning: false
 #| echo: true
 ma2 <- readRDS(here("Rdata", "ma2.rds"))
 summary(ma2)
+```
+
+Compare the resutls of these two models are nearly identical. The only difference is that the results of variance (SD) components are reported in different locations. 
+
+Related to this mmodel, there is one potential mistakes when using `brms` to fit a location-scale meta-regression.
+
+if we set `se(si)` without `sigma = TRUE` and `sigma ~ 1 + habitat` at the same time (where `si` is the standard error of the observations and `habitat` is the moderator of the scale parameter `sigma`).vThis is because setting `se(si)` means the scale parameter `sigma` is replaced by `si` and `brms` will not estimate the scale part of the location-scale meta-regression.
+
+It is easy to check it.
+Setting priors for such model structures will trigger the following error message `"Error: Cannot predict or fix 'sigma' in this model."`
+
+```{r}
+#| eval: false
+form1 <- bf(dARR | se(si) ~ 1 + habitat, # this is u
+            sigma ~ 1 + habitat)
+
+prior1 <- default_prior(form1, 
+                        data = dat, 
+                        family = gaussian())
+ma1 <- brm(form1, 
+           data = dat, 
+           chains = 2, 
+           cores = 2, 
+           iter = 5000, 
+           warmup = 2000,
+           prior = prior1
+)
+
 ```
 
 ## `blsmeta`
@@ -642,11 +642,7 @@ Whenever possible, we will show the `R` code based on `metafor` and `blsmeta` as
 
 ### Data
 
-We use the data (hereafter **Example 1**) from the following paper:
-
-> Pottier, P. et al. (2022).
-> Developmental plasticity in thermal tolerance: Ontogenetic variation, persistence, and future directions.
-> Ecology Letters, 25(10), 2245–2268.
+We use the **Example 1** data
 
 This data were originally used to examine the capacity of animals to increase thermal tolerance via heat exposure.
 
@@ -1909,6 +1905,302 @@ print(fit_mr44)
 ```
 
 The slight differences are expected to be caused by the different priors and MCMC samplers used in `brms` and `blsmeta`.
+
+# Figure code
+
+```{r}
+#| eval: false
+#| code-fold: true
+
+# Function to visualize fixed effects (revised for fig)
+visualize_fixed_effects <- function(model, title) {
+  fixed_effect_vars <- get_variables_dynamic(model, "^b_")
+  if (length(fixed_effect_vars) == 0) {
+    message("No fixed effects found")
+    return(NULL)
+  }
+  
+  tryCatch({
+    fixed_effects_samples <- model %>%
+      spread_draws(!!!syms(fixed_effect_vars)) %>%
+      pivot_longer(cols = all_of(fixed_effect_vars), names_to = ".variable", values_to = ".value") %>%
+      mutate(.variable = rename_vars(.variable))
+    
+    ggplot(fixed_effects_samples, aes(x = .value, y = .variable)) +
+      stat_halfeye(
+        normalize = "xy", 
+        point_interval = "mean_qi", 
+        fill = "lightcyan3", 
+        color = "lightcyan4"
+      ) +
+      geom_vline(xintercept = 0, linetype = "dashed", color = "#005") +
+      labs(title = title, y = "", x = "Posterior values") +
+      theme_classic()
+  }, error = function(e) {
+    message("Error in visualize_fixed_effects: ", e$message)
+    return(NULL)
+  })
+}
+
+
+###########
+# Example 1
+###########
+
+dat <- read.csv(here("data", "thermal.csv"))
+
+# selecting varaibles we need
+dat <- dat %>% select(dARR, Var_dARR, es_ID, population_ID, study_ID, exp_design, habitat)
+
+# creating SE (sqrt(Var))
+dat$si <- sqrt(dat$Var_dARR)
+
+# creating a new variable (method) according to the oringal paper
+dat$method <- ifelse(dat$exp_design == c("A", "B", "C"), "initial", "persisitent")
+
+vcv <- diag(dat$Var_dARR)
+rownames(vcv) <- dat$es_ID
+colnames(vcv) <- dat$es_ID
+
+
+# 4 plots
+
+# plot 1
+
+fit_mr1 <- readRDS(here("Rdata", "fit_mr1.rds"))
+p1 <- visualize_fixed_effects(fit_mr1, title = "a. Categorical biological")
+
+
+
+# plot 2
+
+# using metafor and use heteroscad model
+# see - Nakagawa S, Lagisz M, O'Dea RE, Pottier P, Rutkowska J, Senior AM, Yang Y, Noble DW. orchaRd 2.0: An R package for visualising meta-analyses with orchard plots.
+mr1_mod <- rma.mv(yi = dARR, 
+                  V =  vcv,
+                  mod = ~ habitat,
+                  random = list(~1 | study_ID,
+                                ~habitat | es_ID),
+                  struct = "DIAG",
+                  data = dat, 
+                  test = "t",
+                  sparse = TRUE,
+                  control=list(optimizer="optim", optmethod="Nelder-Mead")
+)
+
+p2 <- orchard_plot(mr1_mod, mod = "habitat", 
+             group = "study_ID", 
+             xlab = "Effect size",
+             trunk.size = 0.5,
+             branch.size = 4,
+             legend.pos = "top.left",
+             cb = FALSE
+             #legend.pos = "none"
+             ) + 
+  scale_colour_manual(values = rep("grey20",2))
+
+p1 + p2
+
+
+# plot 3
+
+fit_mr2 <- readRDS(here("Rdata", "fit_mr2.rds"))
+
+p3 <- visualize_fixed_effects(fit_mr2, title = "b. Categorical methodological")
+
+# plot 4
+
+mr2_mod <- rma.mv(yi = dARR, 
+                  V =  vcv,
+                  mod = ~ method,
+                  random = list(~1 | study_ID,
+                                ~method | es_ID),
+                  struct = "DIAG",
+                  data = dat, 
+                  test = "t",
+                  sparse = TRUE,
+                  control=list(optimizer="optim", optmethod="Nelder-Mead")
+)
+
+p4 <- orchard_plot(mr2_mod, mod = "method", 
+             group = "study_ID", 
+             xlab = "Effect size",
+             trunk.size = 0.5,
+             branch.size = 4,
+             legend.pos = "top.left",
+             cb = FALSE
+             #legend.pos = "none"
+             ) + 
+  scale_colour_manual(values = rep("grey20",2))
+
+p3 + p4
+
+
+############
+# Example 2
+############
+
+dat <- read.csv(here("data", "elevation.csv"))
+dim(dat)
+# filter data LMA
+
+dat <- dat %>% filter(trait == "Narea")
+
+dim(dat)
+
+dat$study_ID <- as.factor(dat$Study_ID)
+dat$es_ID <- as.factor(1:nrow(dat))
+
+# using escalc use ROM
+
+dat <- escalc(measure = "ROM", 
+              m1i = treatment, 
+              m2i = control, 
+              sd1i = sd_treatment, 
+              sd2i = sd_control, 
+              n1i = n_treatment, 
+              n2i = n_control, 
+              data = dat)
+
+
+vcv <- diag(dat$vi)
+rownames(vcv) <- dat$es_ID
+colnames(vcv) <- dat$es_ID
+
+
+# 2 plots
+
+# plot 5
+
+fit_mr3 <- readRDS(here("Rdata", "fit_mr3.rds"))
+
+p5 <- visualize_fixed_effects(fit_mr3, title = "c. Continuous biological")
+
+# plot 6
+
+# using metafor and orchaRd
+# see - Nakagawa S, Lagisz M, O'Dea RE, Pottier P, Rutkowska J, Senior AM, Yang Y, Noble DW. orchaRd 2.0: An R package for visualising meta-analyses with orchard plots.
+mr3_mod <- rma.mv(yi = yi, 
+                  V =  vcv,
+                  mod = ~ elevation_log,
+                  random = list(~1 | study_ID,
+                                ~1 | es_ID),
+                  #struct = "DIAG",
+                  data = dat, 
+                  test = "t",
+                  sparse = TRUE,
+                  control=list(optimizer="optim", optmethod="Nelder-Mead")
+)
+
+bubble_plot(mr3_mod, mod = "elevation_log", group = "study_ID", g = TRUE, 
+            xlab = "ln(elevation) (moderator)",
+            ylab = "SDM (effect size)",
+            legend.pos = "bottom.left")
+
+p6 <- bubble_plot(mr3_mod, mod = "elevation_log", 
+             group = "study_ID", 
+             g = TRUE, 
+             xlab = "ln(elevation) (moderator)",
+             ylab = "lnRR (effect size)",
+             legend.pos = "bottom.left",
+             k.pos = "top.left") + 
+  geom_point(data = dat,
+             aes(x = elevation_log, y = yi,
+                 #fill = "green",
+                 #colour = "green",
+                 size = 1/sqrt(vi)), alpha = 0.3,
+             #shape = 23
+             ) #+
+  # scale_color_discrete() + 
+  # scale_shape_manual(values = 21) +
+  # scale_fill_manual(values = "#117733") +
+  # scale_colour_manual(values = "grey20")
+                                   
+p5 + p6
+
+############
+# Example 3
+############
+
+dat <- read.csv(here("data", "seed.csv"))
+
+dat$study_ID <- as.factor(dat$study)
+dat$es_ID <- as.factor(1:nrow(dat))
+dat$se <- sqrt(dat$var.eff.size) # SE (sampling error SD)
+dat$smd <- dat$eff.size # effect isze
+dat$cyear <- scale(dat$study.year, center = TRUE, scale = FALSE) # centred year
+
+
+# selecting varaibles we need
+dat <- dat %>% select(smd, var.eff.size, es_ID, study_ID, se, cyear)
+
+dat$vi <- dat$var.eff.size
+vcv <- diag(dat$var.eff.size)
+rownames(vcv) <- dat$es_ID
+colnames(vcv) <- dat$es_ID
+# 3 plots 
+
+# plot 7
+
+fit_mr4 <- readRDS(here("Rdata", "fit_mr4.rds"))
+
+p7 <- visualize_fixed_effects(fit_mr4, title = "d.  Publication bias")
+
+
+# plot 8
+
+# using metafor and orchaRd
+
+mr4_mod <- rma.mv(yi = smd, 
+                  V =  vcv,
+                  mod = ~ se + cyear,
+                  random = list(~1 | study_ID,
+                                ~1 | es_ID),
+                  #struct = "DIAG",
+                  data = dat, 
+                  test = "t",
+                  sparse = TRUE,
+                  control=list(optimizer="optim", optmethod="Nelder-Mead")
+)
+
+p8 <- bubble_plot(mr4_mod, mod = "se", group = "study_ID", g = TRUE, 
+            xlab = "Standard error (SE: moderator)",
+            ylab = "SMD (effect size)",
+            legend.pos = "bottom.left",
+            k.pos = "top.right") + 
+  geom_point(data = dat,
+             aes(x = se, y =smd,
+                 size = 1/sqrt(var.eff.size)), alpha = 0.3,
+  ) 
+
+# plot 9
+
+p9 <- bubble_plot(mr4_mod, mod = "cyear", group = "study_ID", g = TRUE, 
+              xlab = "Centered publicaiton year (moderator)",
+              ylab = "SDM (effect size)",
+              legend.pos = "bottom.left",
+              k.pos = "bottom.right") + 
+  geom_point(data = dat,
+             aes(x = cyear, y = smd,
+                 size = 1/sqrt(var.eff.size)), alpha = 0.3,
+  ) 
+
+p7 + (p8 / p9)
+
+### arranging
+
+layout<- "
+AABB
+CCDD
+EEFF
+GGHH
+GGII
+"
+
+p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + plot_layout(design = layout)
+```
+
+![Fig 4](/Users/itchyshin/Dropbox/Github Local/location-scale_meta-analysis/fig/Fig_examples.png)
 
 # Software and package versions
 

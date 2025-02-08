@@ -1201,19 +1201,19 @@ prior_mr1b$prior[5] = "constant(1)"
 prior_mr1b 
 
 # fitting model
-fit_mr1 <- brm(form_mr1, 
+fit_mr1b <- brm(form_mr1b, 
             data = dat, 
             data2 = list(vcv = vcv),
             chains = 2, 
             cores = 2, 
             iter = 10000, 
             warmup = 5000,
-            prior = prior_mr1,
+            prior = prior_mr1b,
             control = list(adapt_delta = 0.95, max_treedepth = 15)
 )
 
 # save this as rds
-saveRDS(fit_mr1, here("Rdata", "fit_mr1.rds"))
+saveRDS(fit_mr1b, here("Rdata", "fit_mr1b.rds"))
 ```
 
 Check the results:
@@ -1221,9 +1221,23 @@ Check the results:
 ```{r}
 #| warning: false
 #| echo: true
-fit_mr1 <- readRDS(here("Rdata", "fit_mr1.rds"))
-summary(fit_mr1)
+fit_mr1b <- readRDS(here("Rdata", "fit_mr1b.rds"))
+summary(fit_mr1b)
 ```
+
+In this dataset, we can estiamte the extra-parmaters (the between-study sd in varaince and also the between-study correlaiton) and now visualize the results:
+
+```{r}
+# getting plots
+plots_fit_mr1p <- list(
+  visualize_fixed_effects(fit_mr1b),
+  visualize_random_effects(fit_mr1b),
+  visualize_correlations(fit_mr1b)
+)
+
+plots_fit_mr1b[[1]] / plots_fit_mr1b[[2]] / plots_fit_mr1b[[3]]
+```
+
 
 ### Bonus 2: Location-scale phylogenetic meta-regression
 

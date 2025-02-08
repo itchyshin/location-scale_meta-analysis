@@ -334,6 +334,44 @@ fit_mr7 <- blsmeta(yi = dARR,
 saveRDS(fit_mr7, here("Rdata", "fit_mr7.rds"))
 
 
+######
+
+# biological moderator
+form_mr1b <- bf(dARR
+                ~ 1  + habitat +
+                  (1|p|study_ID) + # this is u_l
+                  (1|gr(es_ID, cov = vcv)), # this is m
+                sigma ~ 1 + habitat +
+                  (1|p|study_ID)
+)
+
+
+# create priorss
+prior_mr1b <- default_prior(form_mr1b, 
+                            data = dat, 
+                            data2 = list(vcv = vcv),
+                            family = gaussian()
+)
+
+# fixing the variance to 1 (meta-analysis)
+prior_mr1b$prior[5] = "constant(1)"
+prior_mr1b 
+
+# fitting model
+fit_mr1b <- brm(form_mr1b, 
+                data = dat, 
+                data2 = list(vcv = vcv),
+                chains = 2, 
+                cores = 2, 
+                iter = 10000, 
+                warmup = 5000,
+                prior = prior_mr1b,
+                control = list(adapt_delta = 0.95, max_treedepth = 15)
+)
+
+# save this as rds
+saveRDS(fit_mr1b, here("Rdata", "fit_mr1b.rds"))
+
 # 
 # #############################
 # # genetic data set (categorical - method)
@@ -654,7 +692,7 @@ saveRDS(fit_mr33, here("Rdata", "fit_mr33.rds"))
 
 # ##################
 # # grazing
-# ###################
+# ##################
 # 
 # dat <- read.csv(here("data", "grazing1.csv"))
 # 

@@ -918,7 +918,7 @@ form_mr1 <- bf(dARR
 
 
 # create priorss
-prior_mr1 <- default_prior(form1, 
+prior_mr1 <- default_prior(form_mr1, 
                         data = dat, 
                         data2 = list(vcv = vcv),
                         family = gaussian()
@@ -1175,7 +1175,57 @@ plots_fit_mr2 <- list(
 plots_fit_mr2[[1]] / plots_fit_mr2[[2]]
 ```
 
-### Bonus: Location-scale phylogenetic meta-regression
+### Bonus 1: Location-scale mulitlevel meta-regression with the between-study random effect in the scale part
+
+```{r}
+#| eval: false
+# biological moderator
+form_mr1b <- bf(dARR
+            ~ 1  + habitat +
+              (1|p|study_ID) + # this is u_l
+              (1|gr(es_ID, cov = vcv)), # this is m
+            sigma ~ 1 + habitat +
+              (1|p|study_ID)
+)
+
+
+# create priorss
+prior_mr1b <- default_prior(form_mr1b, 
+                        data = dat, 
+                        data2 = list(vcv = vcv),
+                        family = gaussian()
+)
+
+# fixing the variance to 1 (meta-analysis)
+prior_mr1b$prior[5] = "constant(1)"
+prior_mr1b 
+
+# fitting model
+fit_mr1 <- brm(form_mr1, 
+            data = dat, 
+            data2 = list(vcv = vcv),
+            chains = 2, 
+            cores = 2, 
+            iter = 10000, 
+            warmup = 5000,
+            prior = prior_mr1,
+            control = list(adapt_delta = 0.95, max_treedepth = 15)
+)
+
+# save this as rds
+saveRDS(fit_mr1, here("Rdata", "fit_mr1.rds"))
+```
+
+Check the results:
+
+```{r}
+#| warning: false
+#| echo: true
+fit_mr1 <- readRDS(here("Rdata", "fit_mr1.rds"))
+summary(fit_mr1)
+```
+
+### Bonus 2: Location-scale phylogenetic meta-regression
 
 Ecological and evolutionary meta-analyses often deal with species-level data.
 The shared evolutionary history among different species could affect both the mean and variance of the traits.

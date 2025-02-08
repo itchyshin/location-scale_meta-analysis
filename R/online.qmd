@@ -1662,17 +1662,7 @@ However, the`Rhat` values are far from 1, signifying model convergence issues.
 The effective sample sizes of the bulk and tails of the MCMC are extremely small.
 These are indications that the parameters are not reliably estimated.
 
-Let's do more tests to confirm this.
-The first test we can do is the posterior predictive test.
-This test will simulate a random sample from the posterior predictive distribution and then compare the simulated sample (replication) to the observed effect size.
-If the `fit_ma3` model has converged and captured the data well, we can expect the density of replications to be roughly similar to that of the observed data.
-This check indicates that the replications deviate from the observed effect size:
-
-```{r}
-pp_check(fit_ma3)
-```
-
-Next, we can display each chain.
+Let's do more tests to confirm this. We can display each chain.
 The result clearly show that one chain does not converge:
 
 ```{r}
@@ -1749,12 +1739,6 @@ fit_ma4 <- readRDS(here("Rdata", "fit_ma4.rds"))
 summary(fit_ma4)
 ```
 
-The posterior predictive test still does not look good:
-
-```{r}
-pp_check(fit_ma4)
-```
-
 While each chain indeed convergences, chains 1 and perform slightly differently:
 
 ```{r}
@@ -1774,10 +1758,7 @@ draws %>%
   theme_minimal()
 ```
 
-Let's further remove another parameter from the scale part, namely the between-study effect:
-
-TODO - Shinichi, could you please help run this `brms` model (taking out `(1|study_ID)` from `sigma ~ 1 + (1|study_ID)`).
-While this will collapse to a normal meta-analysis, it uses a different framework and will be a good illustration why we recommend removing random effects from the scale part when fitting location-scale regression.
+In these case, it is probably adverisable not to have the between-study random effect in the scale part.
 
 ### Test publication bias based on multilevel location-scale meta-regression
 
@@ -1909,7 +1890,6 @@ The slight differences are expected to be caused by the different priors and MCM
 # Figure code
 
 ```{r}
-#| eval: false
 #| code-fold: true
 
 # Function to visualize fixed effects (revised for fig)
@@ -2092,11 +2072,6 @@ mr3_mod <- rma.mv(yi = yi,
                   control=list(optimizer="optim", optmethod="Nelder-Mead")
 )
 
-bubble_plot(mr3_mod, mod = "elevation_log", group = "study_ID", g = TRUE, 
-            xlab = "ln(elevation) (moderator)",
-            ylab = "SDM (effect size)",
-            legend.pos = "bottom.left")
-
 p6 <- bubble_plot(mr3_mod, mod = "elevation_log", 
              group = "study_ID", 
              g = TRUE, 
@@ -2196,11 +2171,9 @@ EEFF
 GGHH
 GGII
 "
-
-p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + plot_layout(design = layout)
+# this is fig 4
+#p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + plot_layout(design = layout)
 ```
-
-![Fig 4](/Users/itchyshin/Dropbox/Github Local/location-scale_meta-analysis/fig/Fig_examples.png)
 
 # Software and package versions
 

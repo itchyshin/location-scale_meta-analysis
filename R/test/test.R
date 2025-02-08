@@ -945,6 +945,47 @@ fit_mr44 <- blsmeta(yi = smd,
 #save
 saveRDS(fit_mr44, here("Rdata", "fit_mr44.rds"))
 
+#
+
+form_ma4b <- bf(smd
+                ~ 1   +
+                  (1|study_ID) + # this is u
+                  (1|gr(es_ID, cov = vcv)), # this is m
+                sigma ~ 1
+)
+
+
+
+prior_ma4b <- default_prior(form_ma4b, 
+                            data = dat, 
+                            data2 = list(vcv = vcv),
+                            family = gaussian()
+)
+
+
+# fixing the varaince to 1 (meta-analysis)
+prior_ma4b$prior[3] = "constant(1)"
+prior_ma4b 
+# fit model
+
+fit_ma4b <- brm(form_ma4b, 
+                data = dat, 
+                data2 = list(vcv = vcv),
+                chains = 2, 
+                cores = 2, 
+                iter = 30000, 
+                warmup = 5000,
+                #backend = "cmdstanr",
+                prior = prior_ma4b,
+                #threads = threading(9),
+                control = list(adapt_delta = 0.99, max_treedepth = 15)
+)
+
+summary(fit_ma4b)
+
+# save this as rds
+saveRDS(fit_ma4b, here("Rdata", "fit_ma4b.rds"))
+
 
 # #-----------
 # # case_441

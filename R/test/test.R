@@ -395,6 +395,27 @@ saveRDS(fit_mr7, here("Rdata", "fit_mr7.rds"))
 # 
 # saveRDS(fit2, here("Rdata", "fit2.rds"))
 
+form2 <- bf(dARR | se(si, sigma = TRUE) ~ 1 + habitat,
+            sigma ~ 1 + habitat)
+
+prior2 <- default_prior(form2, 
+                        data = dat, 
+                        family = gaussian()
+)
+
+# this will run but this is a different model
+ma2 <- brm(form2, 
+           data = dat, 
+           chains = 2, 
+           cores = 2, 
+           iter = 5000, 
+           warmup = 2000,
+           prior = prior2,
+           control = list(adapt_delta = 0.99, max_treedepth = 20)
+)
+
+# save this as rds
+saveRDS(ma2, here("Rdata", "ma2.rds"))
 
 #############
 # EXAMPLE 2

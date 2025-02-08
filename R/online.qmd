@@ -536,7 +536,7 @@ fit_mr6 <- readRDS(here("Rdata", "fit_mr6.rds"))
 summary(fit_mr6)
 ```
 
-An alternative way is the following way but we will not use this implementation for two reasons: 1) it cannot incoprate the variance-covariance matrix of sampling errors and 2) the first specification above is quiker to converge. 
+An alternative way is the following way but we will not use this implementation for two reasons: 1) it cannot incorporate the variance-covariance matrix of sampling errors and 2) the first specification above is quicker to converge. 
 
 ```{r}
 #| eval: false
@@ -574,7 +574,7 @@ ma2 <- readRDS(here("Rdata", "ma2.rds"))
 summary(ma2)
 ```
 
-Compare the resutls of these two models are nearly identical. The only difference is that the results of variance (SD) components are reported in different locations. 
+Compare the resutls of these two models are nearly identical.  
 
 Related to this mmodel, there is one potential mistakes when using `brms` to fit a location-scale meta-regression.
 
@@ -1292,13 +1292,21 @@ We use the data (hereafter **Example 2**) from the following paper:
 > Global patterns of intraspecific leaf trait responses to elevation.
 > Global Change Biology, 25(7), 2485–2498.
 
-**Example 2** involves using a dataset (`elevation.csv`) to meta-analyse the impact of elevation on intraspecific leaf trait.
+**Example 2** involves using a dataset (`elevation.csv`) to meta-analyse the impact of elevation on an intraspecific leaf trait (`Narea`).
 Let's load `elevation.csv` into `R`, and do some basic pre-processes:
 
 ```{r}
 # load
 dat <- read.csv(here("data", "elevation.csv"))
 # calculate es
+# filter data Narea
+dat <- dat %>% filter(trait == "Narea")
+
+dat$study_ID <- as.factor(dat$Study_ID)
+dat$es_ID <- as.factor(1:nrow(dat))
+
+# using escalc use ROM
+
 dat <- escalc(measure = "ROM", 
               m1i = treatment, 
               m2i = control, 
@@ -1830,8 +1838,7 @@ plots_fit_mr4 <- list(
 plots_fit_mr4[[1]] / plots_fit_mr4[[2]]
 ```
 
-Ask Shinichi: not sure we will have the following code in this tutorial and whether we should use the following figures in the main text.
-Because the results from `metafor` which ignores the scale part are distinct from those from `brms` and `blsmeta`.
+We notice actually `se` is significant from the `metafor` model (i.e., we have a small-study effect). This is because the results from `metafor` which ignores the scale part are distinct from those from `brms` and `blsmeta`. This leads to an interesting point that without modeling the scale part, the model detected an incorrect, small-study effect (probably, due to the small-study divergence was creating the small-study effect).
 
 ```{r}
 mr4_mod <- rma.mv(yi = smd, 
@@ -1844,6 +1851,8 @@ mr4_mod <- rma.mv(yi = smd,
                   sparse = TRUE,
                   control=list(optimizer="optim", optmethod="Nelder-Mead")
 )
+
+summary(mr4_mod)
 
 bubble_plot(mr4_mod, mod = "se", group = "study_ID", g = TRUE, 
             xlab = "Standard error (SE: moderator)",

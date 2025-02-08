@@ -1225,19 +1225,7 @@ fit_mr1b <- readRDS(here("Rdata", "fit_mr1b.rds"))
 summary(fit_mr1b)
 ```
 
-In this dataset, we can estiamte the extra-parmaters (the between-study sd in varaince and also the between-study correlaiton) and now visualize the results:
-
-```{r}
-# getting plots
-plots_fit_mr1p <- list(
-  visualize_fixed_effects(fit_mr1b),
-  visualize_random_effects(fit_mr1b),
-  visualize_correlations(fit_mr1b)
-)
-
-plots_fit_mr1b[[1]] / plots_fit_mr1b[[2]] / plots_fit_mr1b[[3]]
-```
-
+The effect sample size (ESS) is away too low and we conclude that this model is over-parametrized.
 
 ### Bonus 2: Location-scale phylogenetic meta-regression
 

@@ -1,6 +1,6 @@
 ---
 title: "**Location-scale Meta-analysis and Meta-regression as a Tool to Capture Large-scale Changes in Biological and Methodological Heterogeneity: a Spotlight on Heteroscedasticity**"
-author: "**Shinichi Nakagawa, Ayumi Mizuno, Kyle Morrision, Lorenzo Ricolfi, Coralie Williams, Szymon M Drobniak, Malgorzata Lagisz, and Yefeng Yang**"
+author: "**Shinichi Nakagawa, Ayumi Mizuno, Kyle Morrison, Lorenzo Ricolfi, Coralie Williams, Szymon M Drobniak, Malgorzata Lagisz, and Yefeng Yang**"
 date: "`r Sys.Date()`"
 format:
   html:

@@ -86,7 +86,7 @@ To install packages that are not on CRAN and archived in Github repositories, ex
 For example, to install `blsmeta` from Github repository, execute `devtools::install_github("donaldRwilliams/blsmeta")` (make sure you have `devtools` installed; if not, execute `install.packages("devtools")`).
 For `orchaRd`, execute `devtools::install_github("daniel1noble/orchaRd", force = TRUE)`.
 
-Version information of each pacakge is listed at the end of this tutorial.
+Version information of each package is listed at the end of this tutorial.
 
 ```{r packages}
 # attempt to load or install necessary packages
@@ -109,9 +109,9 @@ pacman::p_load(
 
 ```
 
-## Custum functions
+## Custom functions
 
-We also provide some additional helper functions to help visualise the results (mainly extracted from the `brms` object).
+We also provide some additional helper functions to help visualize the results (mainly extracted from the `brms` object).
 The most straightforward way to use these custom functions is to run the code chunk below.
 Alternatively, paste the code into the console and hit `Enter` to have `R` ‘learn’ these custom functions.
 
@@ -470,7 +470,7 @@ The current version of `metafor` (`v4.7.53`), `brms` (`v2.22.0`) and `blsmeta` (
 
 **Notes:**
 
-While `metafor` models the variance on the scale part, `brms` and `blsmeta` model standard deviation (square root of variance) so one needs to double regression coefficients on the scale part from `brms` and `blsmeta` to make them comparable.
+While `metafor` models the variance on the scale part, `brms` and `blsmeta` model standard deviation (square root of variance) so one needs to square the regression coefficients on the scale part from `brms` and `blsmeta` to make them comparable.
 
 ## `metafor`
 
@@ -576,9 +576,9 @@ summary(ma2)
 
 The results of these two models are nearly identical.  
 
-Related to this mmodel, there is one potential mistakes when using `brms` to fit a location-scale meta-regression.
+Related to this model, there is one potential mistakes when using `brms` to fit a location-scale meta-regression.
 
-if we set `se(si)` without `sigma = TRUE` and `sigma ~ 1 + habitat` at the same time (where `si` is the standard error of the observations and `habitat` is the moderator of the scale parameter `sigma`).vThis is because setting `se(si)` means the scale parameter `sigma` is replaced by `si` and `brms` will not estimate the scale part of the location-scale meta-regression.
+If we set `se(si)` without `sigma = TRUE` and `sigma ~ 1 + habitat` at the same time (where `si` is the standard error of the observations and `habitat` is the moderator of the scale parameter `sigma`). This is because setting `se(si)` means the scale parameter `sigma` is replaced by `si` and `brms` will not estimate the scale part of the location-scale meta-regression.
 
 It is easy to check it.
 Setting priors for such model structures will trigger the following error message `"Error: Cannot predict or fix 'sigma' in this model."`
@@ -757,7 +757,7 @@ summary(fit_ma1)
 Note that there is non-zero variance (SD) in the between-study effect on the scale part as well as the location part.
 Also, there is a positive correlation ($\rho_u = 0.38$) between the location and scale between-study random effects.
 
-### Visualzing location-scale meta-analysis
+### Visualizing location-scale meta-analysis
 
 One advantage of Bayesian approach is that we can get posterior distribution of each model parameters.
 Let's visualize the posterior distribution of three types of model parameters:
@@ -1028,7 +1028,7 @@ t <- data.frame(Software = c("brms", "blsmeta", "metafor"),
            ) %>% dfround(3)
 ```
 
-### Visualzing meta-regression with a biological categorical variable
+### Visualizing meta-regression with a biological categorical variable
 
 Let's visualize the parameter estimates of `habitat` in both location and scale parts:
 
@@ -1161,7 +1161,7 @@ summary(mr2_mod)
 
 The results of both location and scale parts from `brms`, `lsmeta`, and `metafor` still align well.
 
-### Visualzing meta-regression with a methodological categorical variable
+### Visualizing meta-regression with a methodological categorical variable
 
 Let's visualize the parameter estimates of `method` in both location and scale parts:
 
@@ -1568,7 +1568,7 @@ plots_fit_mr3 <- list(
 plots_fit_mr3[[1]] / plots_fit_mr3[[2]]
 ```
 
-An alternative way to visualize the results:L
+An alternative way to visualize the results:
 
 ```{r}
 mr3_mod <- rma.mv(yi = yi, 
@@ -1608,7 +1608,7 @@ fit_mr33 <- blsmeta(yi = yi,
 saveRDS(fit_mr33, here("Rdata", "fit_mr33.rds"))
 ```
 
-Except the estimate of the slop of the scale part, other results are very similar:
+Except the estimate of the slope of the scale part, other results are very similar:
 
 ```{r}
 #| warning: false
@@ -1618,8 +1618,7 @@ print(fit_mr33)
 ```
 
 The differences are expected to be caused by the different priors and MCMC samplers used in `brms` and `lsmeta`.
-However, if we back-transform the estimate to its original scale (raw variance).
-The results become very similar.
+However, if we back-transform the estimate to its original scale (raw variance), the results become very similar.
 
 ## Example 3: Publication Bias (Small-Study, Decline, Proteus)
 
@@ -1818,7 +1817,7 @@ draws %>%
   theme_minimal()
 ```
 
-In these case, it is probably adverisable not to have the between-study random effect in the scale part.
+In these case, it is probably advisable not to have the between-study random effect in the scale part.
 
 ### Test publication bias based on multilevel location-scale meta-regression
 
@@ -1877,7 +1876,7 @@ fit_mr4 <- readRDS(here("Rdata", "fit_mr4.rds"))
 summary(fit_mr4)
 ```
 
-Visualizations also indicates the above observations:
+Visualizations also indicates what we found above:
 
 ```{r}
 # getting plots

@@ -1925,6 +1925,7 @@ Just add `se` and `cyear` as the moderators:
 
 ```{r}
 #| eval: false
+
 dat$study_ID <- as.numeric(dat$study_ID)
 fit_mr44 <- blsmeta(yi = smd,
                     vi = var.eff.size,

@@ -58,7 +58,7 @@ This online material is a supplement to the paper about multilevel location-scal
 
 # Content
 
-In this online material, we will illustrates how to fit:
+In this online material, we will illustrate how to fit:
 
 -   Normal random-effects meta-analyses (including a trick to speed up Markov chain Monte Carlo in `brms`)
 
@@ -309,7 +309,7 @@ summary(fit_ma6)
 ## `brms`
 
 `brms` is powerful Bayesian modelling package.
-While it is a package that is dedicated to meta-analysis, it can be used to fit meta-analysis models.
+While it is a package that is not dedicated to meta-analysis, it can be used to fit meta-analysis models.
 An important part of using Bayesian approach is to choose proper priors.
 For the illustrative purpose, we will use the default priors that are designed to be weakly informative so that they provide moderate regularization and help stabilize computation.
 In your own analysis, you should choose more informative priors via, for example, prior elicitation.
@@ -433,7 +433,7 @@ fit_ma9 <- brm(form_ma9,
 saveRDS(fit_ma9, here("Rdata", "fit_ma9.rds"))
 ```
 
-Note that this model covered more quickly compared to the first and second `brms` models:
+Note that this model converged more quickly compared to the first and second `brms` models:
 
 ```{r}
 fit_ma9 <- readRDS(here("Rdata", "fit_ma9.rds"))
@@ -443,7 +443,7 @@ summary(fit_ma9)
 ## `blsmeta`
 
 `blsmeta` also provides a Bayesian way to fit a random-effects meta-analysis.
-The syntax is looks more similar to that from `metafor`:
+The syntax looks more similar to that from `metafor`:
 
 ```{r}
 # random-effects meta-analysis
@@ -470,7 +470,7 @@ The current version of `metafor` (`v4.7.53`), `brms` (`v2.22.0`) and `blsmeta` (
 
 **Notes:**
 
-While `metafor` models the variance on the scale part, `brms` and `blsmeta` models standard deviation (square root of variance) so one needs to double regression coefficients on the scale part from `brms` and `blsmeta` to make them comparable.
+While `metafor` models the variance on the scale part, `brms` and `blsmeta` model standard deviation (square root of variance) so one needs to double regression coefficients on the scale part from `brms` and `blsmeta` to make them comparable.
 
 ## `metafor`
 
@@ -574,7 +574,7 @@ ma2 <- readRDS(here("Rdata", "ma2.rds"))
 summary(ma2)
 ```
 
-Compare the resutls of these two models are nearly identical.  
+The results of these two models are nearly identical.  
 
 Related to this mmodel, there is one potential mistakes when using `brms` to fit a location-scale meta-regression.
 
@@ -644,11 +644,11 @@ Whenever possible, we will show the `R` code based on `metafor` and `blsmeta` as
 
 We use the **Example 1** data
 
-This data were originally used to examine the capacity of animals to increase thermal tolerance via heat exposure.
+This data was originally used to examine the capacity of animals to increase thermal tolerance via heat exposure.
 
 Basic description of this dataset (`thermal.csv`):
 
--   `dARR` : effect size estimates, representing the developmental acclimation response ratio: the ratio of the slopes of acclimation
+-   `dARR`: effect size estimates, representing the developmental acclimation response ratio: the ratio of the slopes of acclimation
 
 -   `Var_dARR`: sampling variance of `dARR`
 

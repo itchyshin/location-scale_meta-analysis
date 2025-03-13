@@ -54,7 +54,7 @@ If you have any questions, errors or bug reports, please contact Dr. Yefeng Yang
 
 # Introduction
 
-This online material is a supplement to the paper about multilevel location-scale meta-analysis and meta-regression. The main aim of this online material is to provide a comprehensive hands-on guide for the implementation of location-scale meta-analysis and meta-regression. While we try to make this online material as stand-along as possible (see below), we do not have too much explanation of the theories underpinning the location-scale meta-analysis and meta-regression. Therefore, we recommend readers to read the associated paper for theoretical background, formulas, and details on location-scale models in ecology and evolution.
+This online material is a supplement to the paper about multilevel location-scale meta-analysis and meta-regression. The main aim of this online material is to provide a comprehensive hands-on guide for the implementation of location-scale meta-analysis and meta-regression. While we try to make this online material as stand-alone as possible (see below), we do not have too much explanation of the theories underpinning the location-scale meta-analysis and meta-regression. Therefore, we recommend readers to read the associated paper for theoretical background, formulas, and details on location-scale models in ecology and evolution.
 
 # Content
 

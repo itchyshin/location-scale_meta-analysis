@@ -813,7 +813,7 @@ For the between-study heterogeneity $I_{B}^2$ (Equation 24), it can be computed 
 100 * sigma2_u / (sigma2_u + sigma2bar_e + Vbar)
 ```
 
-For the between-study heterogeneity $I_{W}^2$, it can be computed with:
+For the within-study heterogeneity $I_{W}^2$, it can be computed with:
 
 ```{r}
 100 * sigma2bar_e / (sigma2_u + sigma2bar_e + Vbar)
@@ -954,7 +954,7 @@ summary(fit_mr1)
 
 Looking at `Regression Coefficients`, We can see `terrestrial` has a lower effect than `aquatic` (`-0.16, 95% CI: −0.23 to −0.29`).
 Meanwhile `terrestrial` is also less variable than `aquatic` (`-1.18, 95% CI: −1.33 to −1.02`).
-If we use traditional meta-analytic approaches (which assume a fixed variance), we will lose finding.
+If we use traditional meta-analytic approaches (which assume a fixed variance), we will lose this important finding on variance difference.
 
 #### `blsmeta`
 
@@ -1076,7 +1076,7 @@ prior_mr2 <- default_prior(form_mr2,
                         family = gaussian()
 )
 
-# fixing the varaince to 1 (meta-analysis)
+# fixing the variance to 1 (meta-analysis)
 prior_mr2$prior[5] = "constant(1)"
 prior_mr2 
 # fit model
@@ -1282,7 +1282,7 @@ prior_mr1p <- default_prior(form_mr1p,
                         data2 = list(vcv = vcv, mat = mat),
                         family = gaussian()
 )
-# fixing the varaince to 1 (meta-analysis)
+# fixing the variance to 1 (meta-analysis)
 prior_mr1p$prior[5] = "constant(1)"
 prior_mr1p 
 # fit model
@@ -1417,7 +1417,7 @@ prior_ma2 <- default_prior(form_ma2,
                          family = gaussian()
 )
 
-# fixing the varaince to 1 (meta-analysis)
+# fixing the variance to 1 (meta-analysis)
 prior_ma2$prior[5] = "constant(1)"
 prior_ma2 
 
@@ -1481,7 +1481,7 @@ For the between-study heterogeneity $I_{B}^2$ (Equation 24), it can be computed 
 100 * sigma2_u / (sigma2_u + sigma2bar_e + Vbar)
 ```
 
-For the between-study heterogeneity $I_{W}^2$, it can be computed with:
+For the within-study heterogeneity $I_{W}^2$, it can be computed with:
 
 ```{r}
 100 * sigma2bar_e / (sigma2_u + sigma2bar_e + Vbar)
@@ -1524,7 +1524,7 @@ prior_mr3 <- default_prior(form_mr3,
                         data2 = list(vcv = vcv),
                         family = gaussian()
 )
-# fixing the varaince to 1 (meta-analysis)
+# fixing the variance to 1 (meta-analysis)
 prior_mr3$prior[5] = "constant(1)"
 prior_mr3 
 
@@ -1631,7 +1631,7 @@ We use the data (hereafter **Example 3**) from the following paper:
 > Scientific Reports, 6, 29839.
 
 This data were originally used to study the effect of forest disturbance on pollination, seed dispersal, seed predation, recruitment and herbivore during plant regeneration.
-Now, we will it to illustrate the proposed four types of publication bias, including small-study effect, decline effect, small-study divergence, and Proteus effect.
+Now, we will use it to illustrate the proposed four types of publication bias, including small-study effect, decline effect, small-study divergence, and Proteus effect.
 While the first two (Equations (35)) are relevant to the location part of the location-scale meta-analysis, the last two (Equation (36)) are relevant to the scale part of the location-scale meta-analysis.
 
 Let's load the data (`seed.csv`) and have basic data cleaning:
@@ -1660,7 +1660,7 @@ The key variables are:
 
 ### Multilevel location-scale meta-analysis
 
-Once again, we start by fitting a location-scale meta-analysis that includes random effects for both the location and scale parts It quickly becomes clear that while including random effects in the scale part and estimating the correlation between the location and scale parts can provide biological and methodological insights, there are drawbacks to do so, namely model convergence issues.
+Once again, we start by fitting a location-scale meta-analysis that includes random effects for both the location and scale parts. It quickly becomes clear that while including random effects in the scale part and estimating the correlation between the location and scale parts can provide biological and methodological insights, there are drawbacks to do so, namely model convergence issues.
 
 Build the matrix for sampling errors:
 
@@ -1687,7 +1687,7 @@ prior_ma3 <- default_prior(form_ma3,
                         family = gaussian()
 )
 
-# fixing the varaince to 1 (meta-analysis)
+# fixing the variance to 1 (meta-analysis)
 prior_ma3$prior[3] = "constant(1)"
 prior_ma3
 
@@ -1764,7 +1764,7 @@ prior_ma4 <- default_prior(form_ma4,
 )
 
 
-# fixing the varaince to 1 (meta-analysis)
+# fixing the variance to 1 (meta-analysis)
 prior_ma4$prior[3] = "constant(1)"
 prior_ma4 
 # fit model
@@ -1797,7 +1797,7 @@ fit_ma4 <- readRDS(here("Rdata", "fit_ma4.rds"))
 summary(fit_ma4)
 ```
 
-While each chain indeed convergences, chains 1 and perform slightly differently:
+While each chain indeed convergences, chains 1 and 2 performed slightly differently:
 
 ```{r}
 draws <- as_draws_df(fit_ma4)
@@ -1844,7 +1844,7 @@ prior_mr4 <- default_prior(form_mr4,
                          family = gaussian()
 )
 
-# fixing the varaince to 1 (meta-analysis)
+# fixing the variance to 1 (meta-analysis)
 prior_mr4$prior[8] = "constant(1)"
 prior_mr4 
 # fit model
